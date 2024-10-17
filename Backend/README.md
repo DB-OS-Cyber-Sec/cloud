@@ -8,3 +8,6 @@ Use idempotent producers: When producing events to Kafka, use idempotent produce
 Use a message schema: Use a message schema, such as Avro or JSON Schema, to define the structure and format of events that are produced and consumed by your system. This will help ensure data consistency and prevent compatibility issues.
 Use a message broker with built-in security: Use a message broker, such as Kafka, that has built-in security features, such as encryption and authentication, to protect the sensitive data that is being transmitted between components.
 Monitor and test your system: Regularly monitor and test your system to ensure that it is functioning as expected and to identify and resolve any potential issues.
+
+curl -X POST 'http://localhost:3000/produce?message=HelloKafka'
+curl 'http://localhost:3000/consume
