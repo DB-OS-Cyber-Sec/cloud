@@ -1,0 +1,35 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+*.log.*
+
+# Ignore Kafka data directory
+kafka-data/
+
+# Docker
+docker-compose.override.yml
+docker-compose.*
+.dockerignore
+Dockerfile
+
+# IDE/Editor settings
+.vscode/
+.idea/
+*.swp
+*.iml
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Build artifacts
+dist/
+build/
