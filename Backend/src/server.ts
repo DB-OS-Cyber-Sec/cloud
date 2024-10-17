@@ -6,6 +6,7 @@ import {
   kafkaConsumerHandler,
   kafkaProducerHandler,
 } from './kafka'; // Kafka connector
+import { environmentHandler } from './environement'; // Environment handler
 
 const fastify: FastifyInstance = Fastify({ logger: true });
 
@@ -27,6 +28,8 @@ fastify.get('/test-mongo', async (request, reply) => {
     reply.code(500).send({ success: false, error: (err as Error).message });
   }
 });
+
+environmentHandler(fastify);
 
 // Kafka Producer Routes
 kafkaProducerHandler(fastify);
