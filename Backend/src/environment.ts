@@ -5,14 +5,14 @@ import { FastifyInstance } from 'fastify';
 const apiKey = 'ZGEA8P4Sp7IS7hdJYvTZlKj6T1uJqdZ4';
 const apiUrl = 'https://api.tomorrow.io/v4/timelines';
 
-// Example coordinates
+// Manila, Philipines coordinates
 const location = {
-  lat: 42.3601, // Latitude
-  lon: -71.0589, // Longitude
+  lat: 14.5995, // Latitude
+  lon: 120.9842, // Longitude
 };
 
 // Fetch current weather conditions
-async function getCurrentConditions() {
+export async function getCurrentConditions() {
   try {
     const response = await axios.get(apiUrl, {
       params: {
@@ -27,13 +27,14 @@ async function getCurrentConditions() {
     });
 
     console.log('Current weather conditions:', response.data);
+    return response.data;
   } catch (err) {
     console.error('Error fetching weather data:', err);
   }
 }
 
-export const environmentHandler = async (fastify: FastifyInstance) => {
-  fastify.get('/current_conditions', async (request, reply) => {
-    await getCurrentConditions();
-  });
-};
+// export const environmentHandler = async (fastify: FastifyInstance) => {
+//   fastify.get('/current_conditions', async (request, reply) => {
+//     await getCurrentConditions();
+//   });
+// };
