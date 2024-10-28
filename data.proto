@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package weatherservice;
+
+// Service definition for weather data
+service DataService {
+  // RPC method to get weather data as JSON
+  rpc GetJsonData (DataRequest) returns (DataResponse) {}
+}
+
+// Request message with an ID for tracking
+message DataRequest {
+  string request_id = 1;
+}
+
+// Response message containing JSON weather data
+message DataResponse {
+  string json_data = 1;
+}
