@@ -1,9 +1,11 @@
 version: '3'
 services:
-  frontend:
-    build: .
+  cloud-frontend:
+    build:
+      context: .
+    command: sh -c "npm run build && npm start"
     ports:
-      - '3000:3000'
+      - "3000:3000"
     volumes:
       - .:/app
     container_name: cloud-frontend
