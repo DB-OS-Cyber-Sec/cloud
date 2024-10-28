@@ -1,4 +1,5 @@
 # app.py
+import json
 from flask import Flask, request, jsonify
 from openai import OpenAI
 
@@ -10,9 +11,16 @@ client = OpenAI(
     api_key="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"  # Replace with your actual API key
 )
 
-@app.route('/generate-limerick', methods=['POST'])
-def generate_limerick():
-    user_message = request.json.get('message', 'Write a limerick about the wonders of GPU computing.')
+@app.route('/predict-weather', methods=['POST'])
+def predict_weather():
+    # Get user input data from the request
+    with open('data.json', 'r') as file:
+        weather_data = json.load(file).get('data', [])
+    # Check if the weather data is being loaded correctly
+    print(weather_data)
+    
+    # Format the prompt message with weather data
+    user_message = f"Based on this data: {weather_data}, can you predict the upcoming 6 hours of data?"
 
     # Create a chat completion request
     completion = client.chat.completions.create(
@@ -29,6 +37,10 @@ def generate_limerick():
     for chunk in completion:
         if chunk.choices[0].delta.content is not None:
             response_content += chunk.choices[0].delta.content
+            print(response_content)
+            # save to file
+            with open("output.txt", "a") as file:
+                file.write(response_content)
 
     return jsonify({"limerick": response_content})
 
