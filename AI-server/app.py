@@ -1,85 +1,133 @@
 import json
 import grpc
-from flask import Flask, request, jsonify
-from openai import OpenAI
+import logging
+from concurrent import futures
 import data_pb2
 import data_pb2_grpc
+from openai import OpenAI
+from typing import Dict, Any
 
-app = Flask(__name__)
-
-# Initialize the OpenAI client
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key="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"
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
+logger = logging.getLogger(__name__)
 
-def get_data_from_grpc():
-    """Get data from gRPC server and save to file"""
-    try:
-        # Create gRPC channel
-        channel = grpc.insecure_channel('localhost:50051')
-        stub = data_pb2_grpc.DataServiceStub(channel)
+class DataService(data_pb2_grpc.DataServiceServicer):
+    def __init__(self):
+        self.client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key="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"
+        )
         
-        # Make request
-        request = data_pb2.DataRequest(request_id="weather_request")
-        response = stub.GetJsonData(request)
-        
-        # Parse JSON data
-        data = json.loads(response.json_data)
-        
-        # Save to file
-        with open('data.json', 'w') as file:
-            json.dump({"data": data}, file)
-            
-        return data
-        
-    except Exception as e:
-        print(f"Error getting gRPC data: {e}")
-        return None
-    finally:
-        if 'channel' in locals():
-            channel.close()
+    def validate_weather_data(self, weather_data: Dict[str, Any]) -> bool:
+        """
+        Validate the required fields in weather data.
+        Returns True if valid, False otherwise.
+        """
+        required_fields = {'temperature', 'humidity', 'precipitation'}
+        return all(field in weather_data for field in required_fields)
 
-@app.route('/predict-weather', methods=['POST'])
-def predict_weather():
-    try:
-        # Get and save data from gRPC server
-        grpc_data = get_data_from_grpc()
-        if not grpc_data:
-            return jsonify({"error": "Failed to get data from gRPC server"}), 500
-        
-        # Read the saved data
-        with open('data.json', 'r') as file:
-            weather_data = json.load(file).get('data', [])
-        
-        # Format the prompt message with weather data
-        user_message = f"You are a weather expert. Based on this data: {weather_data}, can you predict the upcoming 6 hours of data? Include temperature, humidity, and precipitation, and present in the form of json"
-
-        # Create a chat completion request
-        completion = client.chat.completions.create(
-            model="meta/llama-3.1-405b-instruct",
-            messages=[{"role": "user", "content": user_message}],
-            temperature=0.2,
-            top_p=0.7,
-            max_tokens=1024,
-            stream=True
+    def format_weather_prompt(self, weather_data: Dict[str, Any]) -> str:
+        """
+        Format the weather data into a prompt for the AI model.
+        """
+        return (
+            "You are a weather expert. Based on this data: "
+            f"{json.dumps(weather_data, indent=2)}, "
+            "can you predict the upcoming 6 hours of data? "
+            "Provide hourly predictions including temperature (°C), "
+            "humidity (%), and precipitation probability (%). "
+            "Return the response in valid JSON format with the following structure: "
+            '{"predictions": [{"hour": 1, "temperature": X, "humidity": Y, "precipitation": Z}, ...]}'
         )
 
-        # Collect the response chunks
-        response_content = ""
-        for chunk in completion:
-            if chunk.choices[0].delta.content is not None:
-                response_content += chunk.choices[0].delta.content
+    async def GetAIPredictionsData(self, request, context):
+        """
+        Handle incoming weather data requests and return AI predictions.
+        """
+        try:
+            # Parse and validate current weather conditions
+            try:
+                current_weather = json.loads(request.current_weather_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON format: {e}")
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details("Invalid JSON format in request")
+                return data_pb2.GetAIPredictionsResponse()
 
-        # Save the response
-        with open('weather_reply.json', 'w') as output_file:
-            output_file.write(response_content)
+            # Validate weather data structure
+            if not self.validate_weather_data(current_weather):
+                logger.error("Missing required weather data fields")
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details("Missing required weather data fields")
+                return data_pb2.GetAIPredictionsResponse()
 
-        return jsonify({"prediction": response_content})
+            logger.info(f"Received valid weather data: {current_weather}")
 
+            # Create AI completion request
+            try:
+                completion = self.client.chat.completions.create(
+                    model="meta/llama-3.1-405b-instruct",
+                    messages=[{
+                        "role": "user",
+                        "content": self.format_weather_prompt(current_weather)
+                    }],
+                    temperature=0.2,
+                    top_p=0.7,
+                    max_tokens=1024,
+                    stream=False
+                )
+                
+                response_content = completion.choices[0].message.content
+                
+                # Validate AI response is valid JSON
+                try:
+                    json.loads(response_content)
+                except json.JSONDecodeError:
+                    logger.error("AI response is not valid JSON")
+                    context.set_code(grpc.StatusCode.INTERNAL)
+                    context.set_details("AI response format error")
+                    return data_pb2.GetAIPredictionsResponse()
+
+                logger.info("Successfully generated AI predictions")
+                return data_pb2.GetAIPredictionsResponse(
+                    ai_predictions_json=response_content
+                )
+
+            except Exception as e:
+                logger.error(f"OpenAI API error: {str(e)}")
+                context.set_code(grpc.StatusCode.INTERNAL)
+                context.set_details("AI service error")
+                return data_pb2.GetAIPredictionsResponse()
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details("Internal server error")
+            return data_pb2.GetAIPredictionsResponse()
+
+def serve_grpc():
+    """
+    Initialize and run the gRPC server with proper error handling.
+    """
+    try:
+        server = grpc.server(
+            futures.ThreadPoolExecutor(max_workers=10),
+            options=[
+                ('grpc.max_send_message_length', 50 * 1024 * 1024),
+                ('grpc.max_receive_message_length', 50 * 1024 * 1024)
+            ]
+        )
+        data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
+        server.add_insecure_port('[::]:50051')
+        server.start()
+        logger.info("gRPC server running on port 50051...")
+        server.wait_for_termination()
     except Exception as e:
-        print(f"Error in predict_weather: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Server failed to start: {str(e)}")
+        raise
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    serve_grpc()

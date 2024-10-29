@@ -24,17 +24,17 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ndata.proto\x12\x0b\x64\x61taservice\"!\n\x0b\x44\x61taRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"!\n\x0c\x44\x61taResponse\x12\x11\n\tjson_data\x18\x01 \x01(\t2Q\n\x0b\x44\x61taService\x12\x42\n\x0bGetJsonData\x12\x18.dataservice.DataRequest\x1a\x19.dataservice.DataResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ndata.proto\x12\x0b\x64\x61taservice\"7\n\x17GetAIPredictionsRequest\x12\x1c\n\x14\x63urrent_weather_json\x18\x01 \x01(\t\"7\n\x18GetAIPredictionsResponse\x12\x1b\n\x13\x61i_predictions_json\x18\x01 \x01(\t2r\n\x0b\x44\x61taService\x12\x63\n\x14GetAIPredictionsData\x12$.dataservice.GetAIPredictionsRequest\x1a%.dataservice.GetAIPredictionsResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'data_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_DATAREQUEST']._serialized_start=27
-  _globals['_DATAREQUEST']._serialized_end=60
-  _globals['_DATARESPONSE']._serialized_start=62
-  _globals['_DATARESPONSE']._serialized_end=95
-  _globals['_DATASERVICE']._serialized_start=97
-  _globals['_DATASERVICE']._serialized_end=178
+  _globals['_GETAIPREDICTIONSREQUEST']._serialized_start=27
+  _globals['_GETAIPREDICTIONSREQUEST']._serialized_end=82
+  _globals['_GETAIPREDICTIONSRESPONSE']._serialized_start=84
+  _globals['_GETAIPREDICTIONSRESPONSE']._serialized_end=139
+  _globals['_DATASERVICE']._serialized_start=141
+  _globals['_DATASERVICE']._serialized_end=255
 # @@protoc_insertion_point(module_scope)

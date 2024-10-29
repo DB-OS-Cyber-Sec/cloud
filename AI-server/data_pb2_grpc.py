@@ -34,17 +34,17 @@ class DataServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetJsonData = channel.unary_unary(
-                '/dataservice.DataService/GetJsonData',
-                request_serializer=data__pb2.DataRequest.SerializeToString,
-                response_deserializer=data__pb2.DataResponse.FromString,
+        self.GetAIPredictionsData = channel.unary_unary(
+                '/dataservice.DataService/GetAIPredictionsData',
+                request_serializer=data__pb2.GetAIPredictionsRequest.SerializeToString,
+                response_deserializer=data__pb2.GetAIPredictionsResponse.FromString,
                 _registered_method=True)
 
 
 class DataServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def GetJsonData(self, request, context):
+    def GetAIPredictionsData(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -53,10 +53,10 @@ class DataServiceServicer(object):
 
 def add_DataServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetJsonData': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetJsonData,
-                    request_deserializer=data__pb2.DataRequest.FromString,
-                    response_serializer=data__pb2.DataResponse.SerializeToString,
+            'GetAIPredictionsData': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAIPredictionsData,
+                    request_deserializer=data__pb2.GetAIPredictionsRequest.FromString,
+                    response_serializer=data__pb2.GetAIPredictionsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -70,7 +70,7 @@ class DataService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def GetJsonData(request,
+    def GetAIPredictionsData(request,
             target,
             options=(),
             channel_credentials=None,
@@ -83,9 +83,9 @@ class DataService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/dataservice.DataService/GetJsonData',
-            data__pb2.DataRequest.SerializeToString,
-            data__pb2.DataResponse.FromString,
+            '/dataservice.DataService/GetAIPredictionsData',
+            data__pb2.GetAIPredictionsRequest.SerializeToString,
+            data__pb2.GetAIPredictionsResponse.FromString,
             options,
             channel_credentials,
             insecure,
