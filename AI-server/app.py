@@ -34,6 +34,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
     async def GetAIPredictionsData(self, request, context):
         try:
             current_weather = json.loads(request.current_weather_json)
+            
         except json.JSONDecodeError:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("Invalid JSON format in request")
@@ -71,7 +72,10 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             )
 
 async def serve():
-    server = grpc.aio.server()
+    server = grpc.aio.server(options=[
+        ('grpc.max_receive_message_length', 50 * 1024 * 1024),  # 50 MB
+        ('grpc.max_send_message_length', 50 * 1024 * 1024) ])
+
     data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
     server.add_insecure_port('[::]:50051')
     await server.start()
