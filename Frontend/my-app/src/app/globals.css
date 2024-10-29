@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @import "leaflet/dist/leaflet.css"; */
+
+
 :root {
   --background: #F6F4F4;
   --foreground: #171717;

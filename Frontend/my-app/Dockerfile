@@ -1,26 +1,23 @@
 # Base image
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Install packages with no cache
+# Install necessary dependencies
 RUN apk add --no-cache libc6-compat
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package.json ./
+# Copy package.json and package-lock.json only (for caching node_modules)
+COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the files
+# Copy all files into the container (in combination with volume mounts)
 COPY . .
-
-# Build the app
-RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
+# Start the app in development mode
+CMD ["npm", "run", "dev"]
