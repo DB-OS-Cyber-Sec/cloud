@@ -1,0 +1,79 @@
+{
+    "data": [
+        {
+            "time": "2024-10-28T15:38:00Z",
+            "values": {
+                "cloudBase": 0.4,
+                "cloudCeiling": 0.4,
+                "cloudCover": 100,
+                "dewPoint": 24.05,
+                "freezingRainIntensity": 0,
+                "humidity": 90,
+                "precipitationProbability": 30,
+                "pressureSurfaceLevel": 998.00,
+                "rainIntensity": 5.0,
+                "sleetIntensity": 0,
+                "snowIntensity": 0,
+                "temperature": 26.0,
+                "temperatureApparent": 28.5,
+                "uvHealthConcern": 0,
+                "uvIndex": 1,
+                "visibility": 8,
+                "weatherCode": 2001,
+                "windDirection": 310,
+                "windGust": 50.0,
+                "windSpeed": 25.0
+            }
+        },
+        {
+            "time": "2024-10-28T15:39:00Z",
+            "values": {
+                "cloudBase": 0.5,
+                "cloudCeiling": 0.5,
+                "cloudCover": 100,
+                "dewPoint": 24.10,
+                "freezingRainIntensity": 0,
+                "humidity": 92,
+                "precipitationProbability": 60,
+                "pressureSurfaceLevel": 995.00,
+                "rainIntensity": 10.0,
+                "sleetIntensity": 0,
+                "snowIntensity": 0,
+                "temperature": 25.8,
+                "temperatureApparent": 28.3,
+                "uvHealthConcern": 0,
+                "uvIndex": 1,
+                "visibility": 6,
+                "weatherCode": 2001,
+                "windDirection": 315,
+                "windGust": 60.0,
+                "windSpeed": 35.0
+            }
+        },
+        {
+            "time": "2024-10-28T15:40:00Z",
+            "values": {
+                "cloudBase": 0.6,
+                "cloudCeiling": 0.6,
+                "cloudCover": 100,
+                "dewPoint": 24.15,
+                "freezingRainIntensity": 0,
+                "humidity": 94,
+                "precipitationProbability": 90,
+                "pressureSurfaceLevel": 990.00,
+                "rainIntensity": 20.0,
+                "sleetIntensity": 0,
+                "snowIntensity": 0,
+                "temperature": 25.5,
+                "temperatureApparent": 28.0,
+                "uvHealthConcern": 0,
+                "uvIndex": 1,
+                "visibility": 4,
+                "weatherCode": 2001,
+                "windDirection": 320,
+                "windGust": 80.0,
+                "windSpeed": 45.0
+            }
+        }
+    ]
+}
