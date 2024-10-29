@@ -1,133 +1,82 @@
 import json
 import grpc
-import logging
-from concurrent import futures
 import data_pb2
 import data_pb2_grpc
 from openai import OpenAI
-from typing import Dict, Any
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from concurrent import futures
+import asyncio
 
 class DataService(data_pb2_grpc.DataServiceServicer):
     def __init__(self):
         self.client = OpenAI(
             base_url="https://integrate.api.nvidia.com/v1",
-            api_key="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"
+            api_key="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"
         )
-        
-    def validate_weather_data(self, weather_data: Dict[str, Any]) -> bool:
-        """
-        Validate the required fields in weather data.
-        Returns True if valid, False otherwise.
-        """
-        required_fields = {'temperature', 'humidity', 'precipitation'}
-        return all(field in weather_data for field in required_fields)
 
-    def format_weather_prompt(self, weather_data: Dict[str, Any]) -> str:
-        """
-        Format the weather data into a prompt for the AI model.
-        """
+    def format_weather_prompt(self, weather_data):
         return (
-            "You are a weather expert. Based on this data: "
-            f"{json.dumps(weather_data, indent=2)}, "
-            "can you predict the upcoming 6 hours of data? "
-            "Provide hourly predictions including temperature (°C), "
-            "humidity (%), and precipitation probability (%). "
-            "Return the response in valid JSON format with the following structure: "
-            '{"predictions": [{"hour": 1, "temperature": X, "humidity": Y, "precipitation": Z}, ...]}'
+            "You are a weather prediction API that MUST return ONLY valid JSON. "
+            "Analyze the following weather data and provide a typhoon prediction: "
+            f"{json.dumps(weather_data, indent=2)}\n\n"
+            "Return your response in this EXACT JSON format with no additional text or explanation:\n"
+            "{\n"
+            '  "risk_classification": "Low|Medium|High",\n'
+            '  "typhoon_category": "Category X (where X is 1-5 based on Saffir-Simpson Scale)",\n'
+            '  "shelter_message": "Your message about staying or seeking shelter"\n'
+            "}\n\n"
+            "Rules:\n"
+            "1. risk_classification MUST be exactly 'Low', 'Medium', or 'High'\n"
+            "2. typhoon_category MUST follow format 'Category X' where X is 1-5\n"
+            "3. shelter_message should be a clear, concise instruction\n"
+            "4. Response MUST be ONLY the JSON object, no other text, no code blocks"
         )
 
     async def GetAIPredictionsData(self, request, context):
-        """
-        Handle incoming weather data requests and return AI predictions.
-        """
         try:
-            # Parse and validate current weather conditions
-            try:
-                current_weather = json.loads(request.current_weather_json)
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON format: {e}")
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("Invalid JSON format in request")
-                return data_pb2.GetAIPredictionsResponse()
+            current_weather = json.loads(request.current_weather_json)
+        except json.JSONDecodeError:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("Invalid JSON format in request")
+            return data_pb2.GetAIPredictionsResponse(ai_predictions_json='{"error": "Invalid JSON format"}')
 
-            # Validate weather data structure
-            if not self.validate_weather_data(current_weather):
-                logger.error("Missing required weather data fields")
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("Missing required weather data fields")
-                return data_pb2.GetAIPredictionsResponse()
+        try:
+            completion = self.client.chat.completions.create(
+                model="meta/llama-3.1-405b-instruct",
+                messages=[{
+                    "role": "user",
+                    "content": self.format_weather_prompt(current_weather)
+                }],
+                temperature=0.2,
+                top_p=0.7,
+                max_tokens=1024,
+                stream=False
+            )
 
-            logger.info(f"Received valid weather data: {current_weather}")
+            response_content = completion.choices[0].message.content
 
-            # Create AI completion request
-            try:
-                completion = self.client.chat.completions.create(
-                    model="meta/llama-3.1-405b-instruct",
-                    messages=[{
-                        "role": "user",
-                        "content": self.format_weather_prompt(current_weather)
-                    }],
-                    temperature=0.2,
-                    top_p=0.7,
-                    max_tokens=1024,
-                    stream=False
-                )
-                
-                response_content = completion.choices[0].message.content
-                
-                # Validate AI response is valid JSON
-                try:
-                    json.loads(response_content)
-                except json.JSONDecodeError:
-                    logger.error("AI response is not valid JSON")
-                    context.set_code(grpc.StatusCode.INTERNAL)
-                    context.set_details("AI response format error")
-                    return data_pb2.GetAIPredictionsResponse()
+            # Clean up the response - remove any markdown code blocks if present
+            cleaned_response = response_content.replace('```json', '').replace('```', '').strip()
 
-                logger.info("Successfully generated AI predictions")
-                return data_pb2.GetAIPredictionsResponse(
-                    ai_predictions_json=response_content
-                )
-
-            except Exception as e:
-                logger.error(f"OpenAI API error: {str(e)}")
-                context.set_code(grpc.StatusCode.INTERNAL)
-                context.set_details("AI service error")
-                return data_pb2.GetAIPredictionsResponse()
+            # Parse JSON and return
+            json_response = json.loads(cleaned_response)
+            return data_pb2.GetAIPredictionsResponse(
+                ai_predictions_json=json.dumps(json_response, indent=2)
+            )
 
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details("Internal server error")
-            return data_pb2.GetAIPredictionsResponse()
+            context.set_details(f"AI service error: {str(e)}")
+            return data_pb2.GetAIPredictionsResponse(
+                ai_predictions_json=json.dumps({"error": str(e)}, indent=2)
+            )
 
-def serve_grpc():
-    """
-    Initialize and run the gRPC server with proper error handling.
-    """
-    try:
-        server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=10),
-            options=[
-                ('grpc.max_send_message_length', 50 * 1024 * 1024),
-                ('grpc.max_receive_message_length', 50 * 1024 * 1024)
-            ]
-        )
-        data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
-        server.add_insecure_port('[::]:50051')
-        server.start()
-        logger.info("gRPC server running on port 50051...")
-        server.wait_for_termination()
-    except Exception as e:
-        logger.error(f"Server failed to start: {str(e)}")
-        raise
+async def serve():
+    server = grpc.aio.server()
+    data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
+    server.add_insecure_port('[::]:50051')
+    await server.start()
+    print("gRPC server running on port 50051...")
+    await server.wait_for_termination()
 
 if __name__ == '__main__':
-    serve_grpc()
+    asyncio.run(serve())
