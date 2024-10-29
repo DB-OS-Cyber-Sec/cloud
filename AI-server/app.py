@@ -14,10 +14,41 @@ class DataService(data_pb2_grpc.DataServiceServicer):
         )
 
     def format_weather_prompt(self, weather_data):
+        # Process the minutely timeline data
+        if isinstance(weather_data, str):
+            try:
+                weather_data = json.loads(weather_data)
+            except json.JSONDecodeError:
+                return "Error: Invalid JSON data received"
+
+        # Extract relevant weather information from tomorrow.io API format
+        try:
+            latest_data = weather_data[0] if isinstance(weather_data, list) else weather_data
+            formatted_data = {
+                "location": {
+                    "latitude": 14.5995,
+                    "longitude": 120.9842,
+                    "name": "Manila"
+                },
+                "current_conditions": {
+                    "temperature": latest_data.get("values", {}).get("temperature", 0),
+                    "humidity": latest_data.get("values", {}).get("humidity", 0),
+                    "wind_speed": latest_data.get("values", {}).get("windSpeed", 0),
+                    "wind_direction": latest_data.get("values", {}).get("windDirection", "N"),
+                    "pressure": latest_data.get("values", {}).get("pressureSeaLevel", 0),
+                    "precipitation": latest_data.get("values", {}).get("precipitationIntensity", 0),
+                    "cloud_cover": latest_data.get("values", {}).get("cloudCover", 0)
+                }
+            }
+        except (AttributeError, IndexError, KeyError) as e:
+            print(f"Error processing weather data: {e}")
+            print(f"Received weather data: {weather_data}")
+            formatted_data = weather_data  # Use original data if processing fails
+
         return (
             "You are a weather prediction API that MUST return ONLY valid JSON. "
             "Analyze the following weather data and provide a typhoon prediction: "
-            f"{json.dumps(weather_data, indent=2)}\n\n"
+            f"{json.dumps(formatted_data, indent=2)}\n\n"
             "Return your response in this EXACT JSON format with no additional text or explanation:\n"
             "{\n"
             '  "risk_classification": "Low|Medium|High",\n'
@@ -33,19 +64,14 @@ class DataService(data_pb2_grpc.DataServiceServicer):
 
     async def GetAIPredictionsData(self, request, context):
         try:
-            current_weather = json.loads(request.current_weather_json)
+            # Print received data for debugging
+            print(f"Received request data: {request.current_weather_json}...")  # Print first 200 chars
             
-        except json.JSONDecodeError:
-            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details("Invalid JSON format in request")
-            return data_pb2.GetAIPredictionsResponse(ai_predictions_json='{"error": "Invalid JSON format"}')
-
-        try:
             completion = self.client.chat.completions.create(
                 model="meta/llama-3.1-405b-instruct",
                 messages=[{
                     "role": "user",
-                    "content": self.format_weather_prompt(current_weather)
+                    "content": self.format_weather_prompt(request.current_weather_json)
                 }],
                 temperature=0.2,
                 top_p=0.7,
@@ -54,17 +80,25 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             )
 
             response_content = completion.choices[0].message.content
-
-            # Clean up the response - remove any markdown code blocks if present
             cleaned_response = response_content.replace('```json', '').replace('```', '').strip()
-
-            # Parse JSON and return
-            json_response = json.loads(cleaned_response)
-            return data_pb2.GetAIPredictionsResponse(
-                ai_predictions_json=json.dumps(json_response, indent=2)
-            )
+            
+            try:
+                json_response = json.loads(cleaned_response)
+                return data_pb2.GetAIPredictionsResponse(
+                    ai_predictions_json=json.dumps(json_response, indent=2)
+                )
+            except json.JSONDecodeError as e:
+                print(f"Error parsing AI response: {e}")
+                print(f"Raw AI response: {response_content}")
+                return data_pb2.GetAIPredictionsResponse(
+                    ai_predictions_json=json.dumps({
+                        "error": "Failed to parse AI response",
+                        "raw_response": cleaned_response
+                    }, indent=2)
+                )
 
         except Exception as e:
+            print(f"Server error: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"AI service error: {str(e)}")
             return data_pb2.GetAIPredictionsResponse(
@@ -72,10 +106,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             )
 
 async def serve():
-    server = grpc.aio.server(options=[
-        ('grpc.max_receive_message_length', 50 * 1024 * 1024),  # 50 MB
-        ('grpc.max_send_message_length', 50 * 1024 * 1024) ])
-
+    server = grpc.aio.server()
     data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
     server.add_insecure_port('[::]:50051')
     await server.start()
