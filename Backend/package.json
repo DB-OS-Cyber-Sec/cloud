@@ -17,6 +17,7 @@
     "fastify": "^5.0.0",
     "fastify-kafkajs": "^0.1.0",
     "fastify-mongodb": "^4.1.1",
+    "fastify-sse-v2": "^4.1.0",
     "kafka-node": "^5.0.0",
     "kafkajs": "^2.2.4",
     "mongodb": "^6.9.0"
