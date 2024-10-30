@@ -5,7 +5,7 @@ import * as consumerModule from './consumer';
 
 const kafka = new Kafka({
   clientId: 'fastify-kafka-client',
-  brokers: ['kafka-broker:9092'], // Use Docker service name or correct broker URL
+  brokers: ['kafka:9092'], // Updated to use the correct service name
 });
 export const producer = kafka.producer();
 export const consumer = kafka.consumer({ groupId: 'fastify-group' });
