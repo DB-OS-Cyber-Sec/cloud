@@ -24,6 +24,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
         # Extract relevant weather information from tomorrow.io API format
         try:
             latest_data = weather_data[0] if isinstance(weather_data, list) else weather_data
+            print(latest_data)
             formatted_data = {
                 "location": {
                     "latitude": 14.5995,
@@ -31,19 +32,34 @@ class DataService(data_pb2_grpc.DataServiceServicer):
                     "name": "Manila"
                 },
                 "current_conditions": {
-                    "temperature": latest_data.get("values", {}).get("temperature", 0),
+                    "time": latest_data.get("time", ""),
+                    "cloud_base": latest_data.get("values", {}).get("cloudBase", 0),
+                    "cloud_ceiling": latest_data.get("values", {}).get("cloudCeiling", 0),
+                    "cloud_cover": latest_data.get("values", {}).get("cloudCover", 0),
+                    "dew_point": latest_data.get("values", {}).get("dewPoint", 0),
+                    "freezing_rain_intensity": latest_data.get("values", {}).get("freezingRainIntensity", 0),
                     "humidity": latest_data.get("values", {}).get("humidity", 0),
-                    "wind_speed": latest_data.get("values", {}).get("windSpeed", 0),
-                    "wind_direction": latest_data.get("values", {}).get("windDirection", "N"),
-                    "pressure": latest_data.get("values", {}).get("pressureSeaLevel", 0),
-                    "precipitation": latest_data.get("values", {}).get("precipitationIntensity", 0),
-                    "cloud_cover": latest_data.get("values", {}).get("cloudCover", 0)
+                    "precipitation_probability": latest_data.get("values", {}).get("precipitationProbability", 0),
+                    "pressure_surface_level": latest_data.get("values", {}).get("pressureSurfaceLevel", 0),
+                    "rain_intensity": latest_data.get("values", {}).get("rainIntensity", 0),
+                    "sleet_intensity": latest_data.get("values", {}).get("sleetIntensity", 0),
+                    "snow_intensity": latest_data.get("values", {}).get("snowIntensity", 0),
+                    "temperature": latest_data.get("values", {}).get("temperature", 0),
+                    "temperature_apparent": latest_data.get("values", {}).get("temperatureApparent", 0),
+                    "uv_health_concern": latest_data.get("values", {}).get("uvHealthConcern", 0),
+                    "uv_index": latest_data.get("values", {}).get("uvIndex", 0),
+                    "visibility": latest_data.get("values", {}).get("visibility", 0),
+                    "weather_code": latest_data.get("values", {}).get("weatherCode", 0),
+                    "wind_direction": latest_data.get("values", {}).get("windDirection", 0),
+                    "wind_gust": latest_data.get("values", {}).get("windGust", 0),
+                    "wind_speed": latest_data.get("values", {}).get("windSpeed", 0)
                 }
             }
         except (AttributeError, IndexError, KeyError) as e:
             print(f"Error processing weather data: {e}")
-            print(f"Received weather data: {weather_data}")
+            # print(f"Received weather data: {weather_data}")
             formatted_data = weather_data  # Use original data if processing fails
+            
 
         return (
             "You are a weather prediction API that MUST return ONLY valid JSON. "
@@ -65,7 +81,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
     async def GetAIPredictionsData(self, request, context):
         try:
             # Print received data for debugging
-            print(f"Received request data: {request.current_weather_json}...")  # Print first 200 chars
+            # print(f"Received request data: {request.current_weather_json}...")
             
             completion = self.client.chat.completions.create(
                 model="meta/llama-3.1-405b-instruct",
