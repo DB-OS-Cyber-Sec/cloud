@@ -7,13 +7,6 @@ import "leaflet/dist/leaflet.css";
 const WeatherMap: React.FC = React.memo(() => {
   const [mapKey, setMapKey] = React.useState(Date.now());
 
-  // Force re-render of the MapContainer on component mount to avoid reinitialization error
-  /*
-  React.useEffect(() => {
-    setMapKey(Date.now());
-  }, []);
-  */
-
   // Cleanup to prevent "already initialized" error
   React.useEffect(() => {
     return () => {
@@ -31,7 +24,21 @@ const WeatherMap: React.FC = React.memo(() => {
       zoom={5}
       style={{ height: "500px", width: "100%", borderRadius: "0.75rem" }}
       id="map" // Ensure this ID is unique if used elsewhere in the component
+      scrollWheelZoom={true}   // Enable scroll wheel zoom
+      dragging={true}          // Ensure dragging is enabled
+      zoomControl={true}       // Enable zoom control
+      touchZoom={true}         // Enable touch-based zooming
+      doubleClickZoom={true}   // Enable double-click zooming
+      boxZoom={true}           // Enable box zoom (shift-drag to zoom)
+      keyboard={true}          // Enable keyboard navigation
     >
+      {/* Base Map Layer */}
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+
+      {/* Tomorrow.io Weather Overlay */}
       <TileLayer
         url={`https://api.tomorrow.io/v4/map/tile/{z}/{x}/{y}/precipitationIntensity/now.png?apikey=H1JQu7ed6iF6AaThQoG2hTOHaUxtFiiW`}
         attribution="&copy; Tomorrow.io"
