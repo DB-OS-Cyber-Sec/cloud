@@ -11,3 +11,5 @@ Monitor and test your system: Regularly monitor and test your system to ensure t
 
 curl -X POST 'http://localhost:3000/produce?message=HelloKafka'
 curl 'http://localhost:3000/consume
+docker build -t pot4t0/cloud15:fastify .
+docker push pot4t0/cloud15:fastify

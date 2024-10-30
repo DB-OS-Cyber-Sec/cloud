@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastify-kafka
+  labels:
+    app: fastify-kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastify-kafka
+  template:
+    metadata:
+      labels:
+        app: fastify-kafka # This matches the service selector
+    spec:
+      containers:
+        - name: fastify-app
+          image: pot4t0/cloud15:fastify
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092 # Ensure this matches the service name
+
+        - name: kafka-broker
+          image: pot4t0/cloud15:kafka
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+          env:
+            - name: KAFKA_MESSAGE_MAX_BYTES
+              value: '209715200' # Example value: 200 MB
+            - name: KAFKA_PRODUCER_MAX_REQUEST_SIZE
+              value: '209715200' # Example value: 200 MB
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://:9092,CONTROLLER://:9093
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka:9092
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+            - name: KAFKA_PROCESS_ROLES
+              value: broker,controller
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: '1@kafka:9093'
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: CONTROLLER
+            - name: KAFKA_NODE_ID
+              value: '1'
+            - name: KAFKA_LOG_DIRS
+              value: /var/lib/kafka/data
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: 'true'
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: '1'
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: '1'
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: '1'
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: kafka-pvc # Ensure this PVC is defined and available
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  ports:
+    - name: broker
+      port: 9092
+      targetPort: 9092
+    - name: controller
+      port: 9093
+      targetPort: 9093
+  selector:
+    app: fastify-kafka # This should match the deployment labels
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastify
+  labels:
+    app: fastify
+spec:
+  type: NodePort # Change from ClusterIP to NodePort
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30001 # Optional: Specify a custom NodePort
+  selector:
+    app: fastify-kafka
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fastify-kafka-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fastify-kafka
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # Target 50% CPU utilization
