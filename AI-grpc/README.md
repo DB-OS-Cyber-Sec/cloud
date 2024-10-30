@@ -1,3 +1,3 @@
-docker build -t ai-server .
+docker build -t ai-grpc .
 
-docker run -p 5000:5000 ai-server
+docker run -p 50051:50051 ai-grpc
