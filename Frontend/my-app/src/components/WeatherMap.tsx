@@ -8,16 +8,18 @@ const WeatherMap: React.FC = React.memo(() => {
   const [mapKey, setMapKey] = React.useState(Date.now());
 
   // Force re-render of the MapContainer on component mount to avoid reinitialization error
+  /*
   React.useEffect(() => {
     setMapKey(Date.now());
   }, []);
+  */
 
   // Cleanup to prevent "already initialized" error
   React.useEffect(() => {
     return () => {
       const mapContainer = document.getElementById("map"); // Ensure this matches your map container ID
       if (mapContainer && (mapContainer as any)._leaflet_id) {
-        (mapContainer as any)._leaflet_id = null; // Reset _leaflet_id to avoid re-initialization
+        delete (mapContainer as any)._leaflet_id; // Remove _leaflet_id to avoid re-initialization errors
       }
     };
   }, []);
