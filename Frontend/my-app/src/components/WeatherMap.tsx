@@ -27,7 +27,6 @@ const WeatherMap: React.FC = React.memo(() => {
       scrollWheelZoom={true}   // Enable scroll wheel zoom
       dragging={true}          // Ensure dragging is enabled
       zoomControl={true}       // Enable zoom control
-      touchZoom={true}         // Enable touch-based zooming
       doubleClickZoom={true}   // Enable double-click zooming
       boxZoom={true}           // Enable box zoom (shift-drag to zoom)
       keyboard={true}          // Enable keyboard navigation
