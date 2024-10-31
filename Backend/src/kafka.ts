@@ -3,22 +3,37 @@ import { Kafka } from 'kafkajs';
 import * as producerModule from './producer';
 import * as consumerModule from './consumer';
 
+// Initialize Kafka
 const kafka = new Kafka({
   clientId: 'fastify-kafka-client',
   brokers: ['kafka:9092'], // Updated to use the correct service name
 });
-export const producer = kafka.producer();
-export const consumer = kafka.consumer({ groupId: 'fastify-group' });
+
+export const weatherProducer = kafka.producer();
+export const aiProducer = kafka.producer();
+export const webAppConsumer = kafka.consumer({ groupId: 'web-app' });
+export const aiConsumer = kafka.consumer({ groupId: 'ai' });
+export const notificationConsumer = kafka.consumer({ groupId: 'notification' });
 
 export async function kafkaConnector(fastify: FastifyInstance) {
-  await producer.connect();
-  await consumer.connect();
+  // Connect to Kafka brokers
+  await weatherProducer.connect();
+  await aiProducer.connect();
+  await webAppConsumer.connect();
+  await aiConsumer.connect();
+  await notificationConsumer.connect();
 
   // Decorate Fastify instance with Kafka producer and consumer
-  fastify.decorate('kafka', { producer, consumer });
+  fastify.decorate('kafka', {
+    weatherProducer,
+    aiProducer,
+    webAppConsumer,
+    aiConsumer,
+    notificationConsumer,
+  });
 
-  // Subscribe to the 'current-weather' topic once during startup
-  await consumer.subscribe({ topic: 'current-weather', fromBeginning: true });
+  webAppConsumer.subscribe({ topic: 'weather-stream' });
+  notificationConsumer.subscribe({ topic: 'weather-stream' });
 }
 
 export const kafkaProducerHandler = (fastify: FastifyInstance) => {
@@ -27,7 +42,7 @@ export const kafkaProducerHandler = (fastify: FastifyInstance) => {
 
     try {
       // Send message to 'test-topic'
-      await producer.send({
+      await weatherProducer.send({
         topic: 'test-topic',
         messages: [
           { value: message }, // The message value must be a string or a buffer
@@ -60,5 +75,14 @@ export const kafkaConsumerHandler = (fastify: FastifyInstance) => {
   // SSE route for consuming weather data from Kafka
   fastify.get('/weather-stream', async (request, reply) => {
     await consumerModule.consumeWeather(reply); // Pass the reply object to handle SSE responses
+  });
+
+  // SSE route for consuming typhoon updates from Kafka
+  fastify.get('/typhoon-stream', async (request, reply) => {
+    // await consumerModule.consumeTyphoonUpdates(reply); // Pass the reply object to handle SSE responses
+  });
+
+  fastify.get('/connect-ai', async () => {
+    await consumerModule.connectAndSubscribeAI();
   });
 };

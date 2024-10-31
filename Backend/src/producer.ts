@@ -1,4 +1,4 @@
-import { producer } from './kafka';
+import { weatherProducer, aiProducer } from './kafka';
 import { getCurrentConditions } from './environment';
 
 export const getWeather = async () => {
@@ -10,7 +10,7 @@ export const getWeather = async () => {
       return;
     }
 
-    await producer.send({
+    await weatherProducer.send({
       topic: 'current-weather',
       messages: [{ value: JSON.stringify(current_weather) }],
     });
@@ -18,5 +18,22 @@ export const getWeather = async () => {
     console.log('Current weather sent to Kafka');
   } catch (err) {
     console.error('Failed to send message:', err);
+  }
+};
+
+export const produceAIPredictions = async (grpcResponse: string) => {
+  try {
+    // Send the AI predictions to the Kafka 'ai-predictions' topic
+    if (!grpcResponse || grpcResponse.length === 0) {
+      console.error('No AI predictions available');
+      return;
+    }
+    await aiProducer.send({
+      topic: 'ai-predictions',
+      messages: [{ value: grpcResponse }],
+    });
+    console.log('AI predictions:');
+  } catch (err) {
+    console.error('Failed to get AI predictions:', err);
   }
 };

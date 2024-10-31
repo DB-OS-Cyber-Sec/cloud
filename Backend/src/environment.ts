@@ -18,7 +18,15 @@ export async function getCurrentConditions() {
       params: {
         apikey: apiKey,
         location: `${location.lat},${location.lon}`,
-        fields: ['temperature', 'precipitationType', 'windSpeed'],
+        fields: [
+          'temperature',
+          'temperatureApparent',
+          'humidity',
+          'windSpeed',
+          'windDirection',
+          'windGust',
+          'precipitationProbability',
+        ],
         timesteps: '1h', // Using '1h' for hourly data (can also use 'current' for the latest data)
         units: 'metric',
         startTime: new Date().toISOString(), // Optional, defaults to current time if not provided
@@ -32,9 +40,3 @@ export async function getCurrentConditions() {
     console.error('Error fetching weather data:', err);
   }
 }
-
-// export const environmentHandler = async (fastify: FastifyInstance) => {
-//   fastify.get('/current_conditions', async (request, reply) => {
-//     await getCurrentConditions();
-//   });
-// };

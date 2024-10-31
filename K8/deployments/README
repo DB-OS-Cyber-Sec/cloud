@@ -9,3 +9,4 @@ kubectl apply -f .
 # Forward Port for Testing
 
 kubectl port-forward svc/fastify 3000:3000
+kubectl port-forward svc/ai 50051:50051
