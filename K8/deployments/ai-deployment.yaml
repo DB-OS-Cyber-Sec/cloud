@@ -14,9 +14,24 @@ spec:
     spec:
       containers:
         - name: ai
-          image: your-registry/ai-service:latest
+          image: pot4t0/cloud15:ai
           resources:
             requests:
               cpu: 500m
             limits:
               cpu: 1000m
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai
+  labels:
+    app: ai
+spec:
+  type: ClusterIP # Change to NodePort if you need external access
+  ports:
+    - port: 50051 # Port for the service
+      targetPort: 50051 # Port where the application listens
+  selector:
+    app: ai # This matches the deployment labels
