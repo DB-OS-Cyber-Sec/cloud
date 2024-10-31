@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  cloud-frontend:
+    build:
+      context: .
+    container_name: cloud-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app  # Mount the current directory to enable hot reloading
+      - /app/node_modules  # Anonymous volume for node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true  # Enable polling for file watching
+    command: ["npm", "run", "dev"]  # Run Next.js in development mode

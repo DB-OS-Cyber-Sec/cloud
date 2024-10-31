@@ -1,9 +1,9 @@
 # cloud
 
-Start Node.js command prompt as administrator.
+Open Command prompt and browse to the directory ".../Frontend/my-app"
 
-Browse to the directory ".../Frontend/my-react-app"
+Then run "docker-compose build"
 
-Run "docker-compose up" to start the development server. 
+Lastly, run "docker-compose up" to start the server.
 
 Browse to "http://localhost:3000" to view the web application.
