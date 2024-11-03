@@ -22,7 +22,8 @@
     "fastify-sse-v2": "^4.1.0",
     "kafka-node": "^5.0.0",
     "kafkajs": "^2.2.4",
-    "mongodb": "^6.9.0"
+    "mongodb": "^6.9.0",
+    "mongoose": "^8.8.0"
   },
   "devDependencies": {
     "@types/mongodb": "^4.0.6",
