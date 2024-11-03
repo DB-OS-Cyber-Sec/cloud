@@ -10,11 +10,14 @@ export default function Navbar() {
             <Link href="/" className="text-white font-bold text-lg">WeatherGuard</Link>
           </div>
           <ul className="flex space-x-4">
-            <li>
-              <Link href="/" className="text-gray-300 hover:text-white">Home</Link>
+            <li className="hover:bg-gray-700 rounded-md">
+              <Link href="/" className="block px-3 py-2 text-gray-300 hover:text-white">Home</Link>
             </li>
-            <li>
-              <Link href="/notifications" className="text-gray-300 hover:text-white">Notifications</Link>
+            <li className="hover:bg-gray-700 rounded-md">
+              <Link href="/notifications" className="block px-3 py-2 text-gray-300 hover:text-white">Notifications</Link>
+            </li>
+            <li className="hover:bg-gray-700 rounded-md">
+              <Link href="/history" className="block px-3 py-2 text-gray-300 hover:text-white">History</Link>
             </li>
           </ul>
         </div>

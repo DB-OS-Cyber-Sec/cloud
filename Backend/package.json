@@ -30,6 +30,7 @@
     "mongoose": "^8.8.0"
   },
   "devDependencies": {
+    "@types/fastify-cors": "^2.1.2",
     "@types/fastify-static": "^2.2.3",
     "@types/mongodb": "^4.0.7",
     "@types/node": "^22.8.6",

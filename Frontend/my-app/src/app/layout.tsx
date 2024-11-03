@@ -1,10 +1,10 @@
-import "./globals.css";
+import './globals.css';
 import Navbar from '../components/Navbar';
 
 export const metadata = {
-  title: "WeatherGuard",
+  title: 'WeatherGuard',
   icons: {
-    icon: "/favicon.png",
+    icon: '/favicon.png',
   },
 };
 
