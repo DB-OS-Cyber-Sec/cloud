@@ -1,5 +1,6 @@
-// server.ts
-import Fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
+import fastifyStatic from '@fastify/static';
+import cors from '@fastify/cors';
+import Fastify, { FastifyInstance } from 'fastify';
 import { mongodbConnectorPlugin } from './mongodb'; // MongoDB connector
 import {
   kafkaConnector,
@@ -8,13 +9,43 @@ import {
 } from './kafka'; // Kafka connector
 import { restAPIHandler } from './rest'; // REST API handler
 import fastifySSE from 'fastify-sse-v2';
+import path from 'path';
 
 const server: FastifyInstance = Fastify({ logger: true });
+
+// Register CORS
+server.register(cors, {
+  origin: '*', // Allow all origins, adjust this as necessary for security
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+});
 
 // Register MongoDB and Kafka connectors
 server.register(fastifySSE);
 server.register(mongodbConnectorPlugin);
 server.register(kafkaConnector);
+server.register(fastifyStatic, {
+  root: path.join(__dirname, 'test'),
+  prefix: '/test/', // Optional: you can set a prefix for the static files
+});
+
+// Route to serve the HTML file
+server.get('/test-web-stream', async (request, reply) => {
+  try {
+    await reply.sendFile('web-stream.html'); // Sends the file located at 'src/test/web-stream.html'
+  } catch (err) {
+    server.log.error(err);
+    reply.code(500).send({ error: 'Failed to serve HTML file' });
+  }
+});
+
+server.get('/test-typhoon-updates', async (request, reply) => {
+  try {
+    await reply.sendFile('typhoon-updates.html'); // Sends the file located at 'src/test/web-stream.html'
+  } catch (err) {
+    server.log.error(err);
+    reply.code(500).send({ error: 'Failed to serve HTML file' });
+  }
+});
 
 // REST API Routes
 restAPIHandler(server);

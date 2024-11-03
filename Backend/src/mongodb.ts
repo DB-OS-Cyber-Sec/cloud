@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
-import { MongoClient, Db } from 'mongodb';
 import mongoose, { Connection } from 'mongoose';
 declare module 'fastify' {
   interface FastifyInstance {

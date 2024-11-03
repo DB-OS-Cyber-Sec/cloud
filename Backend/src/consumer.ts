@@ -5,8 +5,7 @@ import { produceAIPredictions } from './producer';
 
 // Store connected clients for SSE
 const clients = new Set<FastifyReply>();
-
-export const consumeWeather = async (reply: FastifyReply) => {
+export const consumeWeather = (reply: FastifyReply) => {
   try {
     console.log('Client connected to consume current weather from Kafka...');
 
@@ -19,12 +18,12 @@ export const consumeWeather = async (reply: FastifyReply) => {
     // Add the current client to the set of connected clients
     clients.add(reply);
 
-    // This ensures that a ping is sent every 20 seconds to keep the connection alive.
+    // Keep-alive ping to keep the connection open
     const keepAliveInterval = setInterval(() => {
-      reply.raw.write(': keep-alive\n\n');
+      reply.raw.write(': keep-alive\n\n'); // Sending a keep-alive message
     }, 20000);
 
-    // Kafka consumer should already be connected and subscribed during startup
+    // Ensure the Kafka consumer is running and processing messages
     webAppConsumer.run({
       eachMessage: async ({ message }) => {
         const messageValue = message.value?.toString();
@@ -32,7 +31,11 @@ export const consumeWeather = async (reply: FastifyReply) => {
           console.log(`Consumed message: ${messageValue}`);
           // Send the consumed message to all connected clients
           for (const client of clients) {
-            client.raw.write(`data: ${messageValue}\n\n`);
+            try {
+              client.raw.write(`data: ${messageValue}\n\n`);
+            } catch (error) {
+              console.error('Error sending message to client:', error);
+            }
           }
         }
       },
@@ -61,6 +64,10 @@ export const connectAndSubscribeAI = async () => {
   // Subscribe to the relevant topic for AI predictions
   await aiConsumer.subscribe({ topic: 'current-weather', fromBeginning: true });
   console.log('AI consumer subscribed to current-weather topic.');
+
+  clients.add({
+    raw: { write: (message: string) => console.log(message) },
+  } as FastifyReply);
 
   // Run the consumer
   await aiConsumer.run({
