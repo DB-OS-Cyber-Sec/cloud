@@ -39,3 +39,24 @@ export async function getCurrentConditions() {
     console.error('Error fetching weather data:', err);
   }
 }
+
+export async function getCurrentConditionsAI() {
+  try {
+    const response = await axios.get(apiUrl, {
+      params: {
+        apikey: apiKey,
+        location: `${location.lat},${location.lon}`,
+
+        timesteps: '1h',
+        units: 'metric',
+        startTime: new Date().toISOString(), // Optional, defaults to current time if not provided
+        endTime: new Date(new Date().getTime() + 3600 * 1000).toISOString(), // 1 hour from now
+      },
+    });
+
+    console.log('Current weather conditions:', response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching weather data:', err);
+  }
+}
