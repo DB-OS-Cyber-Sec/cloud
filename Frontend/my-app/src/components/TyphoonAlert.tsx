@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 type TyphoonAlertData = {
   riskClassification: string;
@@ -6,52 +6,56 @@ type TyphoonAlertData = {
   shelterMessage: string;
 };
 
-// Hardcoded example data for Typhoon Alert
-const sampleTyphoonAlertData: TyphoonAlertData = {
-  riskClassification: "Low",
-  typhoonCategory: "Category 1",
-  shelterMessage: "No immediate action required, continue with daily activities.",
-};
-
 const TyphoonAlert: React.FC = () => {
-  const data = sampleTyphoonAlertData;
+  const [data, setData] = useState<TyphoonAlertData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Create an EventSource to listen to the typhoon alert stream
+    const eventSource = new EventSource("http://localhost:3010/typhoon-stream");
+
+    // Listen for the incoming messages from the server
+    eventSource.onmessage = (event) => {
+      try {
+        console.log("Received typhoon alert data:", event.data);
+        const parsedData = JSON.parse(event.data);
+
+        // Assuming the server sends the data in the format:
+        // { riskClassification: "...", typhoonCategory: "...", shelterMessage: "..." }
+        setData({
+          riskClassification: parsedData.riskClassification,
+          typhoonCategory: parsedData.typhoonCategory,
+          shelterMessage: parsedData.shelterMessage,
+        });
+      } catch (error) {
+        console.log("Error parsing typhoon alert data:", error);
+        setError("Error parsing typhoon alert data.");
+      }
+    };
+
+    // Handle any error from the EventSource
+    eventSource.onerror = (error) => {
+      console.log("EventSource failed:", error);
+      setError("Failed to connect to typhoon alert stream.");
+      eventSource.close(); // Close the EventSource on error
+    };
+
+    // Clean up the EventSource connection on component unmount
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  if (error) return <p>{error}</p>;
+  if (!data) return <p>Press the "Simulate API Call" button to get typhoon alert data</p>;
 
   return (
     <div>
-      <p>Risk of Typhoon: {data.riskClassification}</p>
-      <p>Typhoon Category: {data.typhoonCategory}</p>
-      <p>Action to Take: {data.shelterMessage}</p>
+      <p><strong>Risk of Typhoon:</strong> {data.riskClassification}</p>
+      <p><strong>Typhoon Category:</strong> {data.typhoonCategory}</p>
+      <p><strong>Action to Take:</strong> {data.shelterMessage}</p>
     </div>
   );
 };
 
 export default TyphoonAlert;
-
-
-
-// import React from "react";
-
-// type TyphoonAlertProps = {
-//   riskClassification: string;
-//   typhoonCategory: string;
-//   shelterMessage: string;
-// };
-
-
-// const TyphoonAlert: React.FC<TyphoonAlertProps> = ({
-//   riskClassification,
-//   typhoonCategory,
-//   shelterMessage,
-  
-// }) => {
-//   return (
-//     <div className="bg-[#1A2738] text-white p-4 rounded-lg space-y-2">
-//       <h3 className="text-lg font-semibold">Typhoon Alert</h3>
-//       <p><strong>Risk of Typhoon:</strong> {riskClassification}</p>
-//       <p><strong>Typhoon Category:</strong> {typhoonCategory}</p>
-//       <p><strong>Action to take:</strong> {shelterMessage}</p>
-//     </div>
-//   );
-// };
-
-// export default TyphoonAlert;
