@@ -2,16 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 
-// List of country codes
-const countryCodes = [
-  { code: "+1", country: "USA" },
-  { code: "+44", country: "UK" },
-  { code: "+63", country: "Philippines" },
-  { code: "+91", country: "India" },
-  { code: "+81", country: "Japan" },
-  { code: "+65", country: "Singapore" },
-];
-
 // List of regions
 const regions = [
   "Manila",
@@ -25,47 +15,18 @@ const regions = [
 
 export default function Notifications() {
   // Subscription form states
-  const [countryCode, setCountryCode] = useState("+63"); // Default to Philippines
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [filteredCodes, setFilteredCodes] = useState(countryCodes); // Filtered list for the combobox dropdown
-  const [showDropdown, setShowDropdown] = useState(false); // Dropdown for country codes
   const [showConfirmation, setShowConfirmation] = useState(false); // Confirmation modal when Subscribe button clicked
+  const [subEmail, setSubEmail] = useState("");
 
   // Region selection states
   const [selectedRegion, setSelectedRegion] = useState(regions[0]);
 
   // Unsubscribe form states
-  const [unsubCountryCode, setUnsubCountryCode] = useState("+63");
-  const [showUnsubDropdown, setShowUnsubDropdown] = useState(false);
-  const [unsubFilteredCodes, setUnsubFilteredCodes] = useState(countryCodes); // Filtered list for the combobox dropdown
-  const [unsubPhoneNumber, setUnsubPhoneNumber] = useState("");
   const [showUnsubConfirmation, setShowUnsubConfirmation] = useState(false); // Confirmation modal when Unsubscribe button clicked
+  const [unsubEmail, setUnsubEmail] = useState("");
 
   const [subscribers, setSubscribers] = useState<string[]>([]);
   const [alertMessage, setAlertMessage] = useState("");
-
-  // Subscription form handlers
-  const handleCountryCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    setCountryCode(input);
-
-    // Filter country codes based on user input (country name or code)
-    if (input) {
-      const filtered = countryCodes.filter((code) =>
-        (code.code && code.code.startsWith(input)) ||
-        (code.country && code.country.toLowerCase().includes(input.toLowerCase()))
-      );
-      setFilteredCodes(filtered);
-    } else {
-      setFilteredCodes(countryCodes);
-    }
-    setShowDropdown(true);
-  };
-
-  const handleSelectCountryCode = (code: string) => {
-    setCountryCode(code);
-    setShowDropdown(false); // Hide the dropdown once a selection is made
-  };
 
   // Store the list of subscribers phone numbers when the component mounts
   useEffect(() => {
@@ -74,112 +35,120 @@ export default function Notifications() {
         const response = await fetch("http://localhost:3010/getSubscribers");
         if (response.ok) {
           const data = await response.json();
-          setSubscribers(data.phoneNumbers); // Store the array of phone numbers
+          setSubscribers(data.email); // Store the array of phone numbers
         } else {
-          console.error("Failed to fetch subscribers");
+          console.log("Failed to fetch subscribers");
         }
       } catch (error) {
-        console.error("Error fetching subscribers:", error);
+        console.log("Error fetching subscribers:", error);
       }
     };
 
     fetchSubscribers();
   }, []);
 
-  // Validation function to check if phone number exists or not
-  const validatePhoneNum = (action: "subscribe" | "unsubscribe") => {
-    const fullPhoneNumber = action === 'subscribe' ? `${countryCode}${phoneNumber}` : `${unsubCountryCode}${unsubPhoneNumber}`;
-    const isSubscribed = subscribers.includes(fullPhoneNumber);
+  // Validation function to check if email exists or not
+  const validateEmail = (action: "subscribe" | "unsubscribe") => {
+    const email = action === 'subscribe' ? `${subEmail}` : `${unsubEmail}`;
+    const isSubscribed = subscribers.includes(subEmail);
 
     if (action === "subscribe" && isSubscribed) {
-      setAlertMessage("This phone number is already subscribed.");
+      setAlertMessage("This email is already subscribed.");
     } else if (action === "unsubscribe" && !isSubscribed) {
-      setAlertMessage("This phone number is not subscribed.");
+      setAlertMessage("This email is not subscribed.");
     } else {
-      handleSendSMS(action, fullPhoneNumber);
+      setEmailOptions(action, email);
     }
   };
 
-  const handleSendSMS = async (action: 'subscribe' | 'unsubscribe', fullPhoneNumber: string) => {
-    const msg = action === 'subscribe'
-      ? `You have subscribed to typhoon alerts for the ${selectedRegion}.`
-      : `You have unsubscribed from typhoon alerts.`;
+  // Set email options
+  const setEmailOptions = async (action: string, email: string) => {
+    let subject = "";
+    let body = "";
 
+    if  (action === "subscribe") {
+      subject = 'Subscribed to Typhoon Alerts';
+      body = `You have been subscribed to Typhoon Alerts. You will receive all alerts for the ${selectedRegion} region.`;
+      addEmail(email);
+      sendEmailAlert(email, subject, body);
+    } else {
+      subject = 'Unsubscribed from Typhoon Alerts';
+      body = `You have been unsubscribed from Typhoon Alerts. You will not receive any further alerts.`;
+      delEmail(email);
+      sendEmailAlert(email, subject, body);
+    }
+  };
+
+  const addEmail = async (email: string) => {
     try {
-      // Add phone number to subscriber list
-      if (action === 'subscribe') {
-        const subResponse = await fetch('http://localhost:3010/newSubscriber', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phoneNumber: fullPhoneNumber,
-          }),
-        });
-
-        if (subResponse.ok) {
-          setAlertMessage("Successfully subscribed to typhoon alerts. Confirmation SMS has been sent.");
-        } else {
-          setAlertMessage("Failed to subscribe to typhoon alerts. Please try again later.");
-        }
-      } else if (action === 'unsubscribe') {  // Remove phone number from subscriber list
-        const unsubResponse = await fetch('http://localhost:3010/delSubscriber', {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phoneNumber: fullPhoneNumber,
-          }),
-        });
-
-        if (unsubResponse.ok) {
-          setAlertMessage("Successfully unsubscribed from typhoon alerts. Confirmation SMS has been sent.");
-        } else {
-          setAlertMessage("Failed to unsubscribe from typhoon alerts. Please try again later.");
-        }
-      }
-
-      //  Send SMS notification when subscribing / unsubscribing
-      await fetch("/api/send-sms", {
+      const response = await fetch("http://localhost:3010/newSubscriber", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscribers([...subscribers, data.email]);
+        setAlertMessage("Email added successfully!");
+      } else {
+        console.log("Failed to add email");
+        setAlertMessage("Failed to add email");
+      }
+    } catch (error) {
+      console.log("Error adding email:", error);
+      setAlertMessage("Error adding email");
+    }
+  };
+
+  const delEmail = async (email: string) => {
+    try {
+      const response = await fetch("http://localhost:3010/delSubscriber", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscribers([...subscribers, data.email]);
+        setAlertMessage("Email added successfully!");
+      } else {
+        console.log("Failed to add email");
+        setAlertMessage("Failed to add email");
+      }
+    } catch (error) {
+      console.log("Error adding email:", error);
+      setAlertMessage("Error adding email");
+    }
+  };
+
+  // Send email alert function
+  const sendEmailAlert = async (email: string, subject: string, body: string) => {
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: fullPhoneNumber,
-          message: msg,
+          to: email,
+          subject: subject,
+          text: body,
         }),
       });
+  
+      const result = await response.json();
+  
+      if (result.success) {
+        alert('Email alert sent successfully!');
+      } else {
+        alert('Failed to send email alert.');
+      }
     } catch (error) {
-      console.log("Error occurred with sending SMS: ", error);
+      console.log('Error sending email:', error);
+      alert('Error sending email.');
     }
   };
-
-  // Unsubscribe form handlers
-  const handleUnsubCountryCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    setUnsubCountryCode(input);
-
-    // Filter country codes based on user input (country name or code)
-    if (input) {
-      const filtered = countryCodes.filter((code) =>
-        (code.code && code.code.startsWith(input)) ||
-        (code.country && code.country.toLowerCase().includes(input.toLowerCase()))
-      );
-      setUnsubFilteredCodes(filtered);
-    } else {
-      setUnsubFilteredCodes(countryCodes);
-    }
-    setShowUnsubDropdown(true);
-  };
-
-  const handleSelectUnsubCountryCode = (code: string) => {
-    setUnsubCountryCode(code);
-    setShowUnsubDropdown(false); // Hide the dropdown once a selection is made
-  };
-
+  
   // Region form handlers
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRegion(e.target.value);
@@ -205,41 +174,14 @@ export default function Notifications() {
         <section className="bg-white p-6 rounded-lg shadow-md w-full">
           <h2 className="text-2xl font-semibold mb-4">Subscribe to Typhoon Alerts in Philippines</h2>
           <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); setShowConfirmation(true); }}>
-            <label className="text-black">Please enter your phone number:</label>
+            <label className="text-black">Please enter your email:</label>
             <div className="flex flex-col gap-2 relative">
               <div className="flex gap-2 relative">
-                {/* Country Code Combobox */}
                 <input
-                  type="text"
-                  value={countryCode}
-                  onChange={handleCountryCodeChange}
-                  onFocus={() => setShowDropdown(true)}
-                  placeholder="+63"
-                  className="p-2 border rounded-md bg-[#2b3451] text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ width: '150px' }}
-                />
-
-                {/* Dropdown for country codes */}
-                {showDropdown && (
-                  <ul className="absolute top-full mt-1 max-h-40 bg-gray-100 border rounded-md shadow-lg overflow-y-auto z-10" style={{ width: '150px' }}>
-                    {filteredCodes.map((item) => (
-                      <li
-                        key={item.code}
-                        onClick={() => handleSelectCountryCode(item.code)}
-                        className="px-2 py-1 hover:bg-[#2064d4] hover:text-white cursor-pointer"
-                      >
-                        {item.code} ({item.country})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {/* Phone Number Input */}
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Input phone number"
+                  type="email"
+                  value={subEmail}
+                  onChange={(e) => setSubEmail(e.target.value)}
+                  placeholder="Input email"
                   className="p-2 border rounded-md bg-[#2b3451] text-white flex-grow focus:outline-none focus:ring-2 focus:ring-blue-900"
                   required
                 />
@@ -274,8 +216,8 @@ export default function Notifications() {
             <div className="bg-white p-6 rounded-lg shadow-lg">
               <h3 className="text-xl font-semibold mb-4">Confirm Subscription</h3>
               <p className="mb-4">
-                You will receive typhoon alerts via SMS at
-                <span className="font-bold text-blue-800"> {countryCode} {phoneNumber}</span>.
+                You will receive typhoon alerts via email at
+                <span className="font-bold text-blue-800"> {subEmail} </span>.
               </p>
               <p className="mb-4">
                 Are you sure you want to subscribe to typhoon alerts for
@@ -289,7 +231,7 @@ export default function Notifications() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => { validatePhoneNum('subscribe'); setShowConfirmation(false); }}
+                  onClick={() => { validateEmail('subscribe'); setShowConfirmation(false); }}
                   className="bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-400"
                 >
                   Confirm
@@ -303,41 +245,14 @@ export default function Notifications() {
         <section className="bg-white p-6 rounded-lg shadow-md w-full">
           <h2 className="text-2xl font-semibold mb-4">Unsubscribe from Typhoon Alerts</h2>
           <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); setShowUnsubConfirmation(true); }}>
-            <label className="text-black">Please enter your phone number:</label>
+            <label className="text-black">Please enter your email:</label>
             <div className="flex flex-col gap-2 relative">
               <div className="flex gap-2 relative">
-                {/* Country Code Combobox */}
                 <input
-                  type="text"
-                  value={unsubCountryCode}
-                  onChange={handleUnsubCountryCodeChange}
-                  onFocus={() => setShowUnsubDropdown(true)}
-                  placeholder="+63"
-                  className="p-2 border rounded-md bg-[#2b3451] text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ width: '150px' }}
-                />
-
-                {/* Dropdown for country codes */}
-                {showUnsubDropdown && (
-                  <ul className="absolute top-full mt-1 max-h-40 bg-gray-100 border rounded-md shadow-lg overflow-y-auto z-10" style={{ width: '150px' }}>
-                    {unsubFilteredCodes.map((item) => (
-                      <li
-                        key={item.code}
-                        onClick={() => handleSelectUnsubCountryCode(item.code)}
-                        className="px-2 py-1 hover:bg-[#2064d4] hover:text-white cursor-pointer"
-                      >
-                        {item.code} ({item.country})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {/* Phone Number Input */}
-                <input
-                  type="tel"
-                  value={unsubPhoneNumber}
-                  onChange={(e) => setUnsubPhoneNumber(e.target.value)}
-                  placeholder="Input phone number"
+                  type="email"
+                  value={unsubEmail}
+                  onChange={(e) => setUnsubEmail(e.target.value)}
+                  placeholder="Input email"
                   className="p-2 border rounded-md bg-[#2b3451] text-white flex-grow focus:outline-none focus:ring-2 focus:ring-blue-900"
                   required
                 />
@@ -358,8 +273,8 @@ export default function Notifications() {
             <div className="bg-white p-6 rounded-lg shadow-lg">
               <h3 className="text-xl font-semibold mb-4">Confirm Unsubscription</h3>
               <p className="mb-4">
-                Are you sure you want to stop receiving typhoon alerts via SMS at
-                <span className="font-bold text-blue-800"> {unsubCountryCode} {unsubPhoneNumber}</span>?
+                Are you sure you want to stop receiving typhoon alerts via email at
+                <span className="font-bold text-blue-800"> {unsubEmail} </span>?
               </p>
               <p className="mb-4">
                 A message will be sent to confirm your unsubscription.
@@ -372,7 +287,7 @@ export default function Notifications() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => { validatePhoneNum('unsubscribe'); setShowUnsubConfirmation(false); }}
+                  onClick={() => { validateEmail('unsubscribe'); setShowUnsubConfirmation(false); }}
                   className="bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-400"
                 >
                   Confirm
