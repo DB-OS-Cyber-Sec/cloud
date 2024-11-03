@@ -29,6 +29,18 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
     }
   });
 
+  // fastify.get('/getCurrentAI', async (request, reply) => {
+  //   try {
+  //     const ai = await db.getCurrentAI();
+  //     reply.send(ai);
+  //   } catch (err) {
+  //     reply.code(500).send({
+  //       error: 'Failed to fetch AI data',
+  //       details: (err as Error).message,
+  //     });
+  //   }
+  // }
+
   // Route to get all historical data
   fastify.get('/getHistoricalData', async (request, reply) => {
     try {

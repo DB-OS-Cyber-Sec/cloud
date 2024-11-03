@@ -19,7 +19,7 @@ spec:
           image: pot4t0/cloud15:fastify
           imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - containerPort: 3010
           env:
             - name: KAFKA_BROKER
               value: kafka:9092 # Ensure this matches the service name
@@ -96,8 +96,8 @@ spec:
   type: NodePort # Change from ClusterIP to NodePort
   ports:
     - name: http
-      port: 3000
-      targetPort: 3000
+      port: 3010
+      targetPort: 3010
       nodePort: 30001 # Optional: Specify a custom NodePort
   selector:
     app: fastify-kafka

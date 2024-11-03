@@ -9,19 +9,22 @@ Use a message schema: Use a message schema, such as Avro or JSON Schema, to defi
 Use a message broker with built-in security: Use a message broker, such as Kafka, that has built-in security features, such as encryption and authentication, to protect the sensitive data that is being transmitted between components.
 Monitor and test your system: Regularly monitor and test your system to ensure that it is functioning as expected and to identify and resolve any potential issues.
 
+npm install
 docker build -t pot4t0/cloud15:fastify .
 docker push pot4t0/cloud15:fastify
-curl -X POST localhost:3000/produce-current-weather
-curl -X GET localhost:3000/weather-stream
-curl -X GET http://localhost:3000/getHistoricalData
-curl -X POST http://localhost:3000/newSubscriber \
+
+docker tag
+curl -X POST localhost:3010/produce-current-weather
+curl -X GET localhost:3010/weather-stream
+curl -X GET http://localhost:3010/getHistoricalData
+curl -X POST http://localhost:3010/newSubscriber \
 -H "Content-Type: application/json" \
 -d '{
 "phoneNumber": "+6581234567"
 }'
-curl -X DELETE http://localhost:3000/delSubscriber \
+curl -X DELETE http://localhost:3010/delSubscriber \
 -H "Content-Type: application/json" \
 -d '{
 "phoneNumber": "+6581234567"
 }'
-curl -X GET http://localhost:3000/getSubscribers
+curl -X GET http://localhost:3010/getSubscribers
