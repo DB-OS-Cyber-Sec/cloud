@@ -29,11 +29,11 @@ export async function kafkaConnector(fastify: FastifyInstance) {
     aiProducer,
     webAppConsumer,
     aiConsumer,
-    notificationConsumer,
   });
 
-  webAppConsumer.subscribe({ topic: 'weather-stream' });
-  notificationConsumer.subscribe({ topic: 'weather-stream' });
+  // Subscribe to topics
+  await webAppConsumer.subscribe({ topic: 'current-weather' });
+  // await aiConsumer.subscribe({ topic: 'current-weather' });
 }
 
 export const kafkaProducerHandler = (fastify: FastifyInstance) => {
