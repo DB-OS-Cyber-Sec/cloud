@@ -83,6 +83,6 @@ export const kafkaConsumerHandler = (fastify: FastifyInstance) => {
   });
 
   fastify.get('/connect-ai', async () => {
-    await consumerModule.connectAndSubscribeAI();
+    // await consumerModule.connectAndSubscribeAI();
   });
 };

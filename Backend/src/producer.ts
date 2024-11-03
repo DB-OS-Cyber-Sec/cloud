@@ -24,9 +24,9 @@ export const getWeather = async () => {
     console.log('Current weather sent to Kafka');
 
     // Send the weather data to the AI service
-    const aiPredictions = await sendWeatherDataGRPC(
-      JSON.stringify(current_weather_ai)
-    );
+    // // const aiPredictions = await sendWeatherDataGRPC(
+    // //   JSON.stringify(current_weather_ai)
+    // );
   } catch (err) {
     console.error('Failed to send message:', err);
   }
