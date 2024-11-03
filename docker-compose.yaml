@@ -10,7 +10,7 @@ services:
       - '50051:50051'
     volumes:
       - ./AI-grpc:/app # Ensure the correct path for your application code
-    command: ['python', 'app.py']
+    command: ['python', 'app.py'] # Command to run your AI service
     networks:
       - kafka_network # Ensure this service is part of the same network
 
@@ -52,6 +52,20 @@ services:
       KAFKA_BROKER: kafka-broker:9092 # Set Kafka broker address
     volumes:
       - ./Backend:/app # Ensure the correct path for your application code
+
+  cloud-frontend:
+    build:
+      context: ./Frontend/my-app # Build the image using the Dockerfile in the current directory
+    container_name: cloud-frontend # Set a specific name for the container
+    ports:
+      - '3000:3000' # Map port 3000 on the host to port 3000 in the container
+    volumes:
+      - ./Frontend/my-app:/app # Mount the current directory to enable hot reloading
+    environment:
+      - NODE_ENV=development # Set the environment to development for Next.js
+      - CHOKIDAR_USEPOLLING=true # Enable polling for file watching to work with Docker
+    networks:
+      - kafka_network # Ensure this service is part of the same network
 
 networks:
   kafka_network:

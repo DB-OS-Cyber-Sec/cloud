@@ -3,3 +3,4 @@
 # Ignore Kafka data directory
 kafka-data/
 .venv
+.next
