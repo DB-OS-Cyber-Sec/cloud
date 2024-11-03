@@ -33,7 +33,6 @@ export default function Notifications() {
 
   // Region selection states
   const [selectedRegion, setSelectedRegion] = useState(regions[0]);
-  const [status, setStatus] = useState("");
 
   // Unsubscribe form states
   const [unsubCountryCode, setUnsubCountryCode] = useState("+63");
@@ -65,16 +64,56 @@ export default function Notifications() {
     setShowDropdown(false); // Hide the dropdown once a selection is made
   };
 
+  const getSubscribers = async () => {
+    try {
+      const response = await fetch('http://localhost:3010/getSubscribers', {
+        method: 'GET',
+      });
+      if (response.ok) {
+        const subList = await response.json();
+        console.log("Subscribers:", subList);
+      } else {
+        console.log('Failed to fetch subscribers');
+      }
+    } catch (error) {
+      console.log('Error fetching subscribers:', error);
+  };
+
   const handleSendSMS = async (action: 'subscribe' | 'unsubscribe') => {
-    const fullPhoneNumber = action === 'subscribe' ? `${countryCode} ${phoneNumber}` : `${unsubCountryCode} ${unsubPhoneNumber}`;
+    console.log("Country Code:", countryCode);
+    console.log("Phone Number:", phoneNumber); // Ensure this is not empty
+    const fullPhoneNumber = action === 'subscribe' ? `${countryCode}${phoneNumber}` : `${unsubCountryCode}${unsubPhoneNumber}`;
+    console.log("Phone number:", fullPhoneNumber);
     const msg = action === 'subscribe'
-    ? `You have subscribed to typhoon alerts for the ${selectedRegion}.`
-    : `You have unsubscribed from typhoon alerts.`;
+      ? `You have subscribed to typhoon alerts for the ${selectedRegion}.`
+      : `You have unsubscribed from typhoon alerts.`;
 
     try {
-      setStatus("Sending...");
+      // Add phone number to subscriber list
+      if (action === 'subscribe') {
+        await fetch('http://localhost:3010/newSubscriber', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phoneNumber: fullPhoneNumber,
+          }),
+        });
+      } else if (action === 'unsubscribe') {  // Remove phone number from subscriber list
+        await fetch('http://localhost:3010/delSubscriber', {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phoneNumber: fullPhoneNumber,
+          }),
+        });
+      }
 
-      const response = await fetch("/api/send-sms", {
+      //  Send SMS notification when subscribing / unsubscribing
+      await fetch("/api/send-sms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,17 +123,8 @@ export default function Notifications() {
           message: msg,
         }),
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setStatus(action === 'subscribe' ? "Subscription successful! SMS sent." : "Unsubscription successful! SMS sent.");
-      } else {
-        setStatus("Failed to send SMS.");
-      }
     } catch (error) {
-      console.error("Error sending SMS:", error);
-      setStatus("Error sending SMS.");
+      console.log("Error occurred with sending SMS: ", error);
     }
 
     // Close the confirmation modal
@@ -224,7 +254,7 @@ export default function Notifications() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleSendSMS}
+                  onClick={() => handleSendSMS('subscribe')}
                   className="bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-400"
                 >
                   Confirm
@@ -307,7 +337,7 @@ export default function Notifications() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleSendSMS}
+                  onClick={() => handleSendSMS('unsubscribe')}
                   className="bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-400"
                 >
                   Confirm
