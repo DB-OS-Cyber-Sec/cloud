@@ -47,6 +47,15 @@ server.get('/test-typhoon-updates', async (request, reply) => {
   }
 });
 
+server.get('/test-weather-forecast', async (request, reply) => {
+  try {
+    await reply.sendFile('weather-forecast.html'); // Sends the file located at 'src/test/web-stream.html'
+  } catch (err) {
+    server.log.error(err);
+    reply.code(500).send({ error: 'Failed to serve HTML file' });
+  }
+});
+
 // REST API Routes
 restAPIHandler(server);
 

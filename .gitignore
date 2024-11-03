@@ -1,2 +1,4 @@
 
 /AI/data
+# Ignore Kafka data directory
+kafka-data/

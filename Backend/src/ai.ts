@@ -1,9 +1,12 @@
-import { FastifyReply } from 'fastify';
+import axios from 'axios';
+import fastify from 'fastify';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 
-const PROTO_PATH = './proto/data.proto';
+export const flaskUrl = 'http://ai:5001'; // Flask server URL
 
+// Load the protobuf
+const PROTO_PATH = './proto/data.proto';
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
   longs: String,
@@ -11,19 +14,11 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   defaults: true,
   oneofs: true,
 });
-
-let currentWeatherJson: string | null = null;
-
 const proto = grpc.loadPackageDefinition(packageDefinition) as any;
 
-// Create gRPC client
 const client = new proto.dataservice.DataService(
-  'localhost:50051',
-  grpc.credentials.createInsecure(),
-  {
-    'grpc.max_receive_message_length': 50 * 1024 * 1024,
-    'grpc.max_send_message_length': 50 * 1024 * 1024,
-  }
+  'ai:50051',
+  grpc.credentials.createInsecure()
 );
 
 // Send weather data to the AI service
