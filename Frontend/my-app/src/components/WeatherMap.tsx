@@ -1,8 +1,9 @@
 "use client";
-
 import * as React from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, LayersControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+// api key 1: H1JQu7ed6iF6AaThQoG2hTOHaUxtFiiW
+// api key 2: hwHYdmMG7hvF0P1lYEBJJTXzP48mRDC5
 
 const WeatherMap: React.FC = React.memo(() => {
   const [mapKey, setMapKey] = React.useState(Date.now());
@@ -10,38 +11,66 @@ const WeatherMap: React.FC = React.memo(() => {
   // Cleanup to prevent "already initialized" error
   React.useEffect(() => {
     return () => {
-      const mapContainer = document.getElementById("map"); // Ensure this matches your map container ID
+      const mapContainer = document.getElementById("map");
       if (mapContainer && (mapContainer as any)._leaflet_id) {
-        delete (mapContainer as any)._leaflet_id; // Remove _leaflet_id to avoid re-initialization errors
+        delete (mapContainer as any)._leaflet_id;
       }
     };
   }, []);
 
   return (
     <MapContainer
-      key={mapKey} // Unique key to force re-render on refresh or update
+      key={mapKey}
       center={[13, 122]} // Centered on the Philippines
       zoom={5}
-      style={{ height: "675px", width: "100%", borderRadius: "0.75rem" }}
-      id="map" // Ensure this ID is unique if used elsewhere in the component
-      scrollWheelZoom={true}   // Enable scroll wheel zoom
-      dragging={true}          // Ensure dragging is enabled
-      zoomControl={true}       // Enable zoom control
-      doubleClickZoom={true}   // Enable double-click zooming
-      boxZoom={true}           // Enable box zoom (shift-drag to zoom)
-      keyboard={true}          // Enable keyboard navigation
+      style={{ height: "650px", width: "100%", borderRadius: "0.75rem" }}
+      id="map"
+      scrollWheelZoom={true}
+      dragging={true}
+      zoomControl={true}
+      doubleClickZoom={true}
+      boxZoom={true}
+      keyboard={true}
+      minZoom={5} // Set minimum zoom to control how far out users can zoom
+      maxZoom={12} // Set maximum zoom to control how close users can zoom in
     >
-      {/* Base Map Layer */}
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
-      />
+      <LayersControl position="topright">
+        {/* Base Map Layer */}
+        <LayersControl.BaseLayer checked name="OpenStreetMap">
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+        </LayersControl.BaseLayer>
 
-      {/* Tomorrow.io Weather Overlay */}
-      <TileLayer
-        url={`https://api.tomorrow.io/v4/map/tile/{z}/{x}/{y}/precipitationIntensity/now.png?apikey=H1JQu7ed6iF6AaThQoG2hTOHaUxtFiiW`}
-        attribution="&copy; Tomorrow.io"
-      />
+        {/* Weather Layers from Tomorrow.io */}
+        <LayersControl.Overlay checked name="Wind Direction">
+          <TileLayer
+            url={`https://api.tomorrow.io/v4/map/tile/{z}/{x}/{y}/windDirection/now.png?apikey=hwHYdmMG7hvF0P1lYEBJJTXzP48mRDC5`}
+            attribution="&copy; Tomorrow.io"
+            minZoom={5} // Set minimum zoom to control how far out users can zoom
+            maxZoom={12} // Set maximum zoom to control how close users can zoom in
+          />
+        </LayersControl.Overlay>
+
+        <LayersControl.Overlay name="Wind Speed">
+          <TileLayer
+            url={`https://api.tomorrow.io/v4/map/tile/{z}/{x}/{y}/windSpeed/now.png?apikey=hwHYdmMG7hvF0P1lYEBJJTXzP48mRDC5`}
+            attribution="&copy; Tomorrow.io"
+            minZoom={5} // Set minimum zoom to control how far out users can zoom
+            maxZoom={12} // Set maximum zoom to control how close users can zoom in
+          />
+        </LayersControl.Overlay>
+
+        <LayersControl.Overlay name="Precipitation Intensity">
+          <TileLayer
+            url={`https://api.tomorrow.io/v4/map/tile/{z}/{x}/{y}/precipitationIntensity/now.png?apikey=hwHYdmMG7hvF0P1lYEBJJTXzP48mRDC5`}
+            attribution="&copy; Tomorrow.io"
+            minZoom={5} // Set minimum zoom to control how far out users can zoom
+            maxZoom={12} // Set maximum zoom to control how close users can zoom in
+          />
+        </LayersControl.Overlay>
+      </LayersControl>
     </MapContainer>
   );
 });

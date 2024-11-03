@@ -17,15 +17,14 @@ const TyphoonAlert: React.FC = () => {
     // Listen for the incoming messages from the server
     eventSource.onmessage = (event) => {
       try {
-        console.log("Received typhoon alert data:", event.data);
+        console.log("Raw typhoon alert data:", event.data); // Verify data structure
         const parsedData = JSON.parse(event.data);
 
-        // Assuming the server sends the data in the format:
-        // { riskClassification: "...", typhoonCategory: "...", shelterMessage: "..." }
+        // Match server keys
         setData({
-          riskClassification: parsedData.riskClassification,
-          typhoonCategory: parsedData.typhoonCategory,
-          shelterMessage: parsedData.shelterMessage,
+          riskClassification: parsedData.risk_classification,
+          typhoonCategory: parsedData.typhoon_category,
+          shelterMessage: parsedData.shelter_message,
         });
       } catch (error) {
         console.log("Error parsing typhoon alert data:", error);

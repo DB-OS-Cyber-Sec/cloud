@@ -24,16 +24,18 @@ const WeatherForecast: React.FC = () => {
         console.log("Received weather forecast data:", event.data);
         const parsedData = JSON.parse(event.data);
 
-        // Assuming the server sends the data in the required structure
-        setData({
-          temperature: parsedData.temperature,
-          temperatureApparent: parsedData.temperatureApparent,
-          humidity: parsedData.humidity,
-          windSpeed: parsedData.windSpeed,
-          windDirection: parsedData.windDirection,
-          windGust: parsedData.windGust,
-          precipitationProbability: parsedData.precipitationProbability,
-        });
+        // Parse data and remove units
+        const cleanData: ForecastData = {
+          temperature: parseFloat(parsedData.one_hour_forecast.temperature?.replace("°C", "") || "0"),
+          temperatureApparent: parseFloat(parsedData.one_hour_forecast.temperature_apparent?.replace("°C", "") || "0"),
+          humidity: parseFloat(parsedData.one_hour_forecast.humidity?.replace("%", "") || "0"),
+          windSpeed: parseFloat(parsedData.one_hour_forecast.wind_speed?.replace(" km/h", "") || "0"),
+          windDirection: parseFloat(parsedData.one_hour_forecast.wind_direction?.replace("°", "") || "0"),
+          windGust: parseFloat(parsedData.one_hour_forecast.wind_gust?.replace(" km/h", "") || "0"),
+          precipitationProbability: parseFloat(parsedData.one_hour_forecast.precipitation_probability?.replace("%", "") || "0"),
+        };
+
+        setData(cleanData);
       } catch (error) {
         console.log("Error parsing weather forecast data:", error);
         setError("Error parsing weather forecast data.");

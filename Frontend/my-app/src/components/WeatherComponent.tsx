@@ -24,8 +24,8 @@ function WeatherComponent() {
         console.log('Received weather data:', event.data);
         const data = JSON.parse(event.data);
 
-        // Assuming data structure based on your provided JSON example
-        const weatherValues = data.data[0].values;
+        // Corrected path to access `values`
+        const weatherValues = data.data.timelines[0].intervals[0].values;
 
         setWeather({
           temperature: weatherValues.temperature,
@@ -57,12 +57,11 @@ function WeatherComponent() {
     };
   }, []);
 
-  if (loading) return <p>Loading weather data...</p>; // Show loading message
+  if (loading) return <p>Press the "Simulate API Call" button to get current weather data</p>; // Show loading message
   if (error) return <p>{error}</p>;
 
   return (
-    <div className="bg-[#121C2D] text-white p-4 rounded-lg space-y-2">
-      <h2 className="text-lg font-semibold">Current Weather</h2>
+    <div>
       <p>Temperature: {weather.temperature}°C</p>
       <p>Feels Like: {weather.temperatureApparent}°C</p>
       <p>Humidity: {weather.humidity}%</p>
