@@ -1,7 +1,7 @@
 import { webAppConsumer, aiConsumer, notificationConsumer } from './kafka';
 import { FastifyReply } from 'fastify';
 
-export const consumeWeather = (reply: FastifyReply) => {
+export const consumeWeather = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
   try {
@@ -22,7 +22,7 @@ export const consumeWeather = (reply: FastifyReply) => {
     }, 20000);
 
     // Ensure the Kafka consumer is running and processing messages
-    webAppConsumer.run({
+    await webAppConsumer.run({
       eachMessage: async ({ message }) => {
         const messageValue = message.value?.toString();
         if (messageValue) {
@@ -54,7 +54,7 @@ export const consumeWeather = (reply: FastifyReply) => {
   }
 };
 
-export const consumeTyphoonUpdates = (reply: FastifyReply) => {
+export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
   try {
@@ -75,7 +75,7 @@ export const consumeTyphoonUpdates = (reply: FastifyReply) => {
     }, 20000);
 
     // Ensure the Kafka consumer is running and processing messages
-    notificationConsumer.run({
+    await notificationConsumer.run({
       eachMessage: async ({ message }) => {
         const messageValue = message.value?.toString();
         if (messageValue) {
@@ -106,7 +106,7 @@ export const consumeTyphoonUpdates = (reply: FastifyReply) => {
       .send({ success: false, message: 'Failed to consume typhoon updates' });
   }
 };
-export const consumeForecast = (reply: FastifyReply) => {
+export const consumeForecast = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
   try {
@@ -127,7 +127,7 @@ export const consumeForecast = (reply: FastifyReply) => {
     }, 20000);
 
     // Ensure the Kafka consumer is running and processing messages
-    aiConsumer.run({
+    await aiConsumer.run({
       eachMessage: async ({ message }) => {
         const messageValue = message.value?.toString();
         if (messageValue) {
