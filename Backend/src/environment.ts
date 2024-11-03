@@ -33,7 +33,6 @@ export async function getCurrentConditions() {
       },
     });
 
-    console.log('Current weather conditions:', response.data);
     return response.data;
   } catch (err) {
     console.error('Error fetching weather data:', err);
@@ -75,7 +74,6 @@ export async function getCurrentConditionsAI() {
       },
     });
 
-    console.log('Current weather conditions:', response.data);
     return response.data;
   } catch (err) {
     console.error('Error fetching weather data:', err);

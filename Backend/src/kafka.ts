@@ -29,11 +29,13 @@ export async function kafkaConnector(fastify: FastifyInstance) {
     aiProducer,
     webAppConsumer,
     aiConsumer,
+    notificationConsumer,
   });
 
   // Subscribe to topics
   await webAppConsumer.subscribe({ topic: 'current-weather' });
-  // await aiConsumer.subscribe({ topic: 'current-weather' });
+  await aiConsumer.subscribe({ topic: 'weather-forecast' });
+  await notificationConsumer.subscribe({ topic: 'typhoon-updates' });
 }
 
 export const kafkaProducerHandler = (fastify: FastifyInstance) => {
@@ -61,6 +63,7 @@ export const kafkaProducerHandler = (fastify: FastifyInstance) => {
   fastify.post('/produce-current-weather', async (request, reply) => {
     try {
       await producerModule.getWeather();
+
       reply.send({ success: true, message: 'Current weather sent' });
     } catch (err) {
       fastify.log.error('Failed to send current weather:', err);
@@ -74,15 +77,16 @@ export const kafkaProducerHandler = (fastify: FastifyInstance) => {
 export const kafkaConsumerHandler = (fastify: FastifyInstance) => {
   // SSE route for consuming weather data from Kafka
   fastify.get('/weather-stream', async (request, reply) => {
-    await consumerModule.consumeWeather(reply); // Pass the reply object to handle SSE responses
+    consumerModule.consumeWeather(reply); // Pass the reply object to handle SSE responses
   });
 
   // SSE route for consuming typhoon updates from Kafka
   fastify.get('/typhoon-stream', async (request, reply) => {
-    // await consumerModule.consumeTyphoonUpdates(reply); // Pass the reply object to handle SSE responses
+    consumerModule.consumeTyphoonUpdates(reply); // Pass the reply object to handle SSE responses
   });
 
-  fastify.get('/connect-ai', async () => {
-    // await consumerModule.connectAndSubscribeAI();
+  // SSE route for weather forecast
+  fastify.get('/weather-forecast', async (request, reply) => {
+    consumerModule.consumeForecast(reply);
   });
 };

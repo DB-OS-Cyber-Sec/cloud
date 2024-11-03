@@ -2,6 +2,9 @@ import { FastifyInstance } from 'fastify';
 import * as db from './mongodb';
 import { getWeather } from './producer';
 import { getCurrentConditionsAI } from './environment';
+import axios from 'axios';
+import { flaskUrl, sendWeatherDataGRPC } from './ai';
+
 export const restAPIHandler = (fastify: FastifyInstance) => {
   // Check Fastify running
   fastify.get('/health', async (request, reply) => {
@@ -30,14 +33,33 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
     }
   });
 
-  fastify.get('/getCurrentAI', async (request, reply) => {
+  fastify.get('/test-sendAI', async (request, reply) => {
     try {
-      const currentAI = await getCurrentConditionsAI();
-      reply.send(currentAI);
+      const response = await getCurrentConditionsAI();
+      // Extract relevant data and format it
+      const hourly = response.data.timelines;
+      const currentWeatherJson = JSON.stringify(hourly);
+      return await sendWeatherDataGRPC(currentWeatherJson);
     } catch (err) {
-      reply.code(500).send({
-        error: 'Failed to fetch AI data',
-        details: (err as Error).message,
+      console.error('Error fetching weather data:', err);
+      return reply
+        .status(500)
+        .send({ error: 'Failed to fetch current conditions' });
+    }
+  });
+
+  fastify.get('/flask-health', async (request, reply) => {
+    try {
+      const response = await axios.get(`${flaskUrl}/health`);
+      return reply.send(response.data);
+    } catch (error: any) {
+      console.error(
+        'Flask health check error:',
+        error.response?.data || error.message
+      );
+      return reply.status(500).send({
+        error: 'Failed to check Flask server health',
+        details: error.message,
       });
     }
   });

@@ -14,7 +14,6 @@ docker build -t pot4t0/cloud15:fastify .
 docker push pot4t0/cloud15:fastify
 
 docker tag
-curl -X POST localhost:3010/produce-current-weather
 curl -X GET localhost:3010/weather-stream
 curl -X GET http://localhost:3010/getHistoricalData
 curl -X POST http://localhost:3010/newSubscriber \

@@ -1,50 +1,65 @@
 import { weatherProducer, aiProducer } from './kafka';
 import { getCurrentConditions, getCurrentConditionsAI } from './environment';
-import { get } from 'http';
+import { sendWeatherDataGRPC } from './ai';
 
 export const getWeather = async () => {
   try {
     const current_weather = await getCurrentConditions();
     const current_weather_ai = await getCurrentConditionsAI();
-    // Send the weather data to the Kafka 'current-weather' topic
+
+    // Validate fetched weather data
     if (!current_weather || Object.keys(current_weather).length === 0) {
       console.error('No weather data available');
       return;
     }
     if (!current_weather_ai || Object.keys(current_weather_ai).length === 0) {
-      console.error('No weather data available');
+      console.error('No AI weather data available');
       return;
     }
 
-    await weatherProducer.send({
-      topic: 'current-weather',
-      messages: [{ value: JSON.stringify(current_weather) }],
-    });
+    console.log('Current weather:', current_weather);
+    console.log('Getting AI predictions & forecast...');
 
-    console.log('Current weather sent to Kafka');
+    const ai_request = JSON.stringify(current_weather_ai.data.timelines);
+    const ai_response = await sendWeatherDataGRPC(ai_request);
 
-    // Send the weather data to the AI service
-    // // const aiPredictions = await sendWeatherDataGRPC(
-    // //   JSON.stringify(current_weather_ai)
-    // );
-  } catch (err) {
-    console.error('Failed to send message:', err);
-  }
-};
-
-export const produceAIPredictions = async (grpcResponse: string) => {
-  try {
-    // Send the AI predictions to the Kafka 'ai-predictions' topic
-    if (!grpcResponse || grpcResponse.length === 0) {
+    // Validate AI response
+    if (!ai_response || ai_response.length === 0) {
       console.error('No AI predictions available');
       return;
     }
-    await aiProducer.send({
-      topic: 'ai-predictions',
-      messages: [{ value: grpcResponse }],
-    });
-    console.log('AI predictions:');
+
+    const ai_json = JSON.parse(ai_response);
+    const ai_predictions = {
+      risk_classification: ai_json.risk_classification,
+      typhoon_category: ai_json.typhoon_category,
+      shelter_message: ai_json.shelter_message,
+    };
+    const ai_forecast = {
+      one_hour_forecast: ai_json.one_hour_forecast,
+    };
+
+    console.log('AI predictions:', ai_predictions);
+    console.log('AI forecast:', ai_forecast);
+
+    // Send messages to Kafka
+    await Promise.all([
+      weatherProducer.send({
+        topic: 'current-weather',
+        messages: [{ value: JSON.stringify(current_weather) }],
+      }),
+      aiProducer.send({
+        topic: 'typhoon-updates',
+        messages: [{ value: JSON.stringify(ai_predictions) }],
+      }),
+      aiProducer.send({
+        topic: 'weather-forecast',
+        messages: [{ value: JSON.stringify(ai_forecast) }],
+      }),
+    ]);
+
+    console.log('Current weather and AI data sent to Kafka');
   } catch (err) {
-    console.error('Failed to get AI predictions:', err);
+    console.error('Failed to send message:', err);
   }
 };

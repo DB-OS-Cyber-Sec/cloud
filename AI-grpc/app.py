@@ -27,41 +27,38 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             except json.JSONDecodeError:
                 return "Error: Invalid JSON data received"
 
-        try:
-            latest_data = weather_data[0] if isinstance(weather_data, list) else weather_data
-            formatted_data = {
-                "location": {
-                    "latitude": 14.5995,
-                    "longitude": 120.9842,
-                    "name": "Manila"
-                },
-                "current_conditions": {
-                    "time": latest_data.get("time", ""),
-                    "cloud_base": latest_data.get("values", {}).get("cloudBase", 0),
-                    "cloud_ceiling": latest_data.get("values", {}).get("cloudCeiling", 0),
-                    "cloud_cover": latest_data.get("values", {}).get("cloudCover", 0),
-                    "dew_point": latest_data.get("values", {}).get("dewPoint", 0),
-                    "freezing_rain_intensity": latest_data.get("values", {}).get("freezingRainIntensity", 0),
-                    "humidity": latest_data.get("values", {}).get("humidity", 0),
-                    "precipitation_probability": latest_data.get("values", {}).get("precipitationProbability", 0),
-                    "pressure_surface_level": latest_data.get("values", {}).get("pressureSurfaceLevel", 0),
-                    "rain_intensity": latest_data.get("values", {}).get("rainIntensity", 0),
-                    "sleet_intensity": latest_data.get("values", {}).get("sleetIntensity", 0),
-                    "snow_intensity": latest_data.get("values", {}).get("snowIntensity", 0),
-                    "temperature": latest_data.get("values", {}).get("temperature", 0),
-                    "temperature_apparent": latest_data.get("values", {}).get("temperatureApparent", 0),
-                    "uv_health_concern": latest_data.get("values", {}).get("uvHealthConcern", 0),
-                    "uv_index": latest_data.get("values", {}).get("uvIndex", 0),
-                    "visibility": latest_data.get("values", {}).get("visibility", 0),
-                    "weather_code": latest_data.get("values", {}).get("weatherCode", 0),
-                    "wind_direction": latest_data.get("values", {}).get("windDirection", 0),
-                    "wind_gust": latest_data.get("values", {}).get("windGust", 0),
-                    "wind_speed": latest_data.get("values", {}).get("windSpeed", 0)
-                }
+        latest_data = weather_data[0] if isinstance(weather_data, list) else weather_data
+
+        formatted_data = {
+            "location": {
+                "latitude": 14.5995,
+                "longitude": 120.9842,
+                "name": "Manila"
+            },
+            "current_conditions": {
+                "time": latest_data.get("time", ""),
+                "cloud_base": latest_data.get("values", {}).get("cloudBase", 0),
+                "cloud_ceiling": latest_data.get("values", {}).get("cloudCeiling", 0),
+                "cloud_cover": latest_data.get("values", {}).get("cloudCover", 0),
+                "dew_point": latest_data.get("values", {}).get("dewPoint", 0),
+                "freezing_rain_intensity": latest_data.get("values", {}).get("freezingRainIntensity", 0),
+                "humidity": latest_data.get("values", {}).get("humidity", 0),
+                "precipitation_probability": latest_data.get("values", {}).get("precipitationProbability", 0),
+                "pressure_surface_level": latest_data.get("values", {}).get("pressureSurfaceLevel", 0),
+                "rain_intensity": latest_data.get("values", {}).get("rainIntensity", 0),
+                "sleet_intensity": latest_data.get("values", {}).get("sleetIntensity", 0),
+                "snow_intensity": latest_data.get("values", {}).get("snowIntensity", 0),
+                "temperature": latest_data.get("values", {}).get("temperature", 0),
+                "temperature_apparent": latest_data.get("values", {}).get("temperatureApparent", 0),
+                "uv_health_concern": latest_data.get("values", {}).get("uvHealthConcern", 0),
+                "uv_index": latest_data.get("values", {}).get("uvIndex", 0),
+                "visibility": latest_data.get("values", {}).get("visibility", 0),
+                "weather_code": latest_data.get("values", {}).get("weatherCode", 0),
+                "wind_direction": latest_data.get("values", {}).get("windDirection", 0),
+                "wind_gust": latest_data.get("values", {}).get("windGust", 0),
+                "wind_speed": latest_data.get("values", {}).get("windSpeed", 0)
             }
-        except (AttributeError, IndexError, KeyError) as e:
-            print(f"Error processing weather data: {e}")
-            formatted_data = weather_data
+        }
 
         return (
             "You are a weather prediction API that MUST return ONLY valid JSON. "
@@ -89,8 +86,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
                 "3. shelter_message should be a clear, concise instruction\n"
                 "4. one_hour_forecast must include accurate values for all listed parameters\n"
                 "5. Response MUST be ONLY the JSON object, no other text, no code blocks"
-
-                    )
+        )
 
     async def GetAIPredictionsData(self, request, context):
         try:
@@ -109,20 +105,16 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             response_content = completion.choices[0].message.content
             cleaned_response = response_content.replace('```json', '').replace('```', '').strip()
             
-            try:
-                json_response = json.loads(cleaned_response)
-                return data_pb2.GetAIPredictionsResponse(
-                    ai_predictions_json=json.dumps(json_response, indent=2)
-                )
-            except json.JSONDecodeError as e:
-                print(f"Error parsing AI response: {e}")
-                return data_pb2.GetAIPredictionsResponse(
-                    ai_predictions_json=json.dumps({
-                        "error": "Failed to parse AI response",
-                        "raw_response": cleaned_response
-                    }, indent=2)
-                )
+            json_response = json.loads(cleaned_response)
+            return data_pb2.GetAIPredictionsResponse(
+                ai_predictions_json=json.dumps(json_response, indent=2)
+            )
 
+        except json.JSONDecodeError as e:
+            print(f"Error parsing AI response: {e}")
+            return data_pb2.GetAIPredictionsResponse(
+                ai_predictions_json=json.dumps({"error": "Failed to parse AI response"}, indent=2)
+            )
         except Exception as e:
             print(f"Server error: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
@@ -144,9 +136,6 @@ def async_to_sync(f):
 @app.route('/api/weather/prediction', methods=['POST'])
 async def get_weather_prediction():
     try:
-        print("Received request data:", request.data)  # Log raw data
-        print("Received JSON data:", request.json)  # Log parsed JSON
-
         weather_data = request.json
         if not weather_data:
             return jsonify({"error": "No weather data provided"}), 400
@@ -183,25 +172,18 @@ async def run_grpc_server():
     await server.wait_for_termination()
 
 def run_flask_server():
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
 
 async def main():
-    # Create event loop for the main thread
     loop = asyncio.get_event_loop()
     
-    # Start gRPC server in the background
     grpc_task = loop.create_task(run_grpc_server())
     
-    # Start Flask in a separate thread
     flask_thread = threading.Thread(target=run_flask_server)
     flask_thread.daemon = True
     flask_thread.start()
     
-    try:
-        # Keep the main loop running
-        await grpc_task
-    except KeyboardInterrupt:
-        print("Shutting down servers...")
+    await grpc_task
 
 if __name__ == '__main__':
     asyncio.run(main())
