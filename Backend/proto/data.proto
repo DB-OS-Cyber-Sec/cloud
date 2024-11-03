@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package dataservice;
+
+service DataService {
+  rpc GetAIPredictionsData (GetAIPredictionsRequest) returns (GetAIPredictionsResponse);
+}
+
+message GetAIPredictionsRequest{
+  string current_weather_json = 1;
+}
+
+message GetAIPredictionsResponse{
+  string ai_predictions_json= 1;
+}

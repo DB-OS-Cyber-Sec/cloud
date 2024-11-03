@@ -1,0 +1,12 @@
+# Metrics Server
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Apply all k8 deployments
+
+kubectl apply -f .
+
+# Forward Port for Testing
+
+kubectl port-forward svc/fastify 3000:3000
+kubectl port-forward svc/ai 50051:50051
