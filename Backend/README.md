@@ -48,6 +48,19 @@ curl -X GET http://localhost:3010/health
 curl -X GET http://localhost:3010/flask-health
 curl -X GET http://localhost:3010/test-mongo
 curl -X GET http://localhost:3010/test-sendAI
+curl -X GET http://localhost:5001/health
+curl -X POST http://localhost:5001/api/weather/prediction \
+-H "Content-Type: application/json" \
+-d '{
+  "time": "2024-03-01T12:00:00Z",
+  "values": {
+    "temperature": 28.5,
+    "humidity": 75,
+    "windSpeed": 15.2,
+    "rainIntensity": 0.5,
+    "pressureSurfaceLevel": 1008
+  }
+}'
 ```
 
 ## SSE Endpoints

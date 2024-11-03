@@ -91,7 +91,7 @@ class DataService(data_pb2_grpc.DataServiceServicer):
     async def GetAIPredictionsData(self, request, context):
         try:
             completion = self.client.chat.completions.create(
-                model="meta/llama-3.1-405b-instruct",
+                model="meta/llama-3.2-3b-instruct",
                 messages=[{
                     "role": "user",
                     "content": self.format_weather_prompt(request.current_weather_json)
