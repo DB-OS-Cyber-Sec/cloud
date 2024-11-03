@@ -10,6 +10,7 @@ export const consumeWeather = async (reply: FastifyReply) => {
     // Set SSE headers
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*');
     reply.raw.setHeader('Connection', 'keep-alive');
     reply.raw.flushHeaders();
 
@@ -63,6 +64,7 @@ export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
     // Set SSE headers
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*');
     reply.raw.setHeader('Connection', 'keep-alive');
     reply.raw.flushHeaders();
 
@@ -115,6 +117,7 @@ export const consumeForecast = async (reply: FastifyReply) => {
     // Set SSE headers
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*');
     reply.raw.setHeader('Connection', 'keep-alive');
     reply.raw.flushHeaders();
 

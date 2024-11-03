@@ -2,14 +2,15 @@ version: '3.8'
 services:
   cloud-frontend:
     build:
-      context: .
-    container_name: cloud-frontend
+      context: . # Build the image using the Dockerfile in the current directory
+    container_name: cloud-frontend # Set a specific name for the container
     ports:
-      - "3000:3000"
+      - '3000:3000' # Map port 3000 on the host to port 3000 in the container
     volumes:
-      - .:/app  # Mount the current directory to enable hot reloading
-      - /app/node_modules  # Anonymous volume for node_modules
+      - .:/app # Mount the current directory to enable hot reloading
+      - /app/node_modules # Anonymous volume for node_modules to prevent host interference
     environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true  # Enable polling for file watching
-    command: ["npm", "run", "dev"]  # Run Next.js in development mode
+      - NODE_ENV=development # Set the environment to development for Next.js
+      - CHOKIDAR_USEPOLLING=true # Enable polling for file watching to work with Docker
+    command: ['npm', 'run', 'dev'] # Run Next.js in development mode
+
