@@ -44,11 +44,51 @@ app.get("/test/current_conditions", async (request, reply) => {
         const minutelyData = response.data.timelines.minutely;
         currentWeatherJson = JSON.stringify(minutelyData);
         console.log("Current weather conditions stored");
-        
+
         return reply.send(JSON.parse(currentWeatherJson));
     } catch (err) {
         console.error("Error fetching weather data:", err);
         return reply.status(500).send({ error: "Failed to fetch current conditions" });
+    }
+});
+
+// Test Flask health endpoint
+app.get('/test/flask-health', async (request, reply) => {
+    try {
+        const response = await axios.get(`${flaskUrl}/health`);
+        return reply.send(response.data);
+    } catch (error: any) {
+        console.error('Flask health check error:', error.response?.data || error.message);
+        return reply.status(500).send({
+            error: 'Failed to check Flask server health',
+            details: error.message
+        });
+    }
+});
+
+// Flask predictions endpoint
+// Flask predictions endpoint
+app.get('/flask-predictions', async (request, reply) => {
+    try {
+        if (!currentWeatherJson) {
+            return reply.status(400).send({ 
+                error: "Current weather data is not available. Please fetch current conditions first." 
+            });
+        }
+
+        console.log("Fetching predictions from Flask endpoint...");
+        console.log("Current Weather JSON:", currentWeatherJson);
+        
+        const parsedWeatherData = JSON.parse(currentWeatherJson);
+        const predictions = await getFlaskPredictions(parsedWeatherData);
+        
+        return reply.send(predictions);
+    } catch (error: any) {
+        console.error('Error fetching Flask predictions:', error);
+        return reply.status(500).send({ 
+            error: 'Failed to fetch Flask predictions',
+            details: error.message 
+        });
     }
 });
 
@@ -67,42 +107,6 @@ async function getFlaskPredictions(weatherData: any): Promise<any> {
         throw error;
     }
 }
-
-
-// Test Flask health endpoint
-app.get('/test/flask-health', async (request, reply) => {
-    try {
-        const response = await axios.get(`${flaskUrl}/health`);
-        return reply.send(response.data);
-    } catch (error: any) {
-        console.error('Flask health check error:', error.response?.data || error.message);
-        return reply.status(500).send({
-            error: 'Failed to check Flask server health',
-            details: error.message
-        });
-    }
-});
-
-// Flask predictions endpoint
-app.get('/flask-predictions', async (request, reply) => {
-    try {
-        if (!currentWeatherJson) {
-            return reply.status(400).send({ 
-                error: "Current weather data is not available. Please fetch current conditions first." 
-            });
-        }
-
-        console.log("Fetching predictions from Flask endpoint...");
-        const predictions = await getFlaskPredictions(JSON.parse(currentWeatherJson));
-        return reply.send(predictions);
-    } catch (error:any) {
-        console.error('Error fetching Flask predictions:', error);
-        return reply.status(500).send({ 
-            error: 'Failed to fetch Flask predictions',
-            details: error.message 
-        });
-    }
-});
 
 const start = async () => {
     try {

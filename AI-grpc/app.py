@@ -4,18 +4,20 @@ import data_pb2
 import data_pb2_grpc
 from openai import OpenAI
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from functools import wraps
 import threading
 
 app = Flask(__name__)
+CORS(app)
 
 class DataService(data_pb2_grpc.DataServiceServicer):
     def __init__(self):
         self.client = OpenAI(
             base_url="https://integrate.api.nvidia.com/v1",
-            api_key="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"
+            api_key="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"
         )
 
     def format_weather_prompt(self, weather_data):
@@ -142,6 +144,9 @@ def async_to_sync(f):
 @app.route('/api/weather/prediction', methods=['POST'])
 async def get_weather_prediction():
     try:
+        print("Received request data:", request.data)  # Log raw data
+        print("Received JSON data:", request.json)  # Log parsed JSON
+
         weather_data = request.json
         if not weather_data:
             return jsonify({"error": "No weather data provided"}), 400
