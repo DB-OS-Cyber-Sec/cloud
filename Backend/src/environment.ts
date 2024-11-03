@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { FastifyInstance } from 'fastify';
 
 // Set up API key and endpoint
 const apiKey = 'ZGEA8P4Sp7IS7hdJYvTZlKj6T1uJqdZ4';
@@ -27,7 +26,7 @@ export async function getCurrentConditions() {
           'windGust',
           'precipitationProbability',
         ],
-        timesteps: '1h', // Using '1h' for hourly data (can also use 'current' for the latest data)
+        timesteps: '1h',
         units: 'metric',
         startTime: new Date().toISOString(), // Optional, defaults to current time if not provided
         endTime: new Date(new Date().getTime() + 3600 * 1000).toISOString(), // 1 hour from now
