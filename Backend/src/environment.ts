@@ -39,3 +39,45 @@ export async function getCurrentConditions() {
     console.error('Error fetching weather data:', err);
   }
 }
+
+export async function getCurrentConditionsAI() {
+  try {
+    const response = await axios.get(apiUrl, {
+      params: {
+        apikey: apiKey,
+        location: `${location.lat},${location.lon}`,
+        fields: [
+          'cloudBase', // cloud base
+          'cloudCeiling', // cloud ceiling
+          'cloudCover', // cloud cover
+          'dewPoint', // dew point
+          'freezingRainIntensity', // freezing rain intensity
+          'humidity', // humidity
+          'precipitationProbability', // precipitation probability
+          'pressureSurfaceLevel', // pressure surface level
+          'rainIntensity', // rain intensity
+          'sleetIntensity', // sleet intensity
+          'snowIntensity', // snow intensity
+          'temperature', // temperature
+          'temperatureApparent', // apparent temperature
+          'uvHealthConcern', // UV health concern
+          'uvIndex', // UV index
+          'visibility', // visibility
+          'weatherCode', // weather code
+          'windDirection', // wind direction
+          'windGust', // wind gust
+          'windSpeed', // wind speed
+        ],
+        timesteps: '1h',
+        units: 'metric',
+        startTime: new Date().toISOString(), // Optional, defaults to current time if not provided
+        endTime: new Date(new Date().getTime() + 3600 * 1000).toISOString(), // 1 hour from now
+      },
+    });
+
+    console.log('Current weather conditions:', response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching weather data:', err);
+  }
+}

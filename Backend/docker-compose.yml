@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
     container_name: fastify-app
     ports:
-      - '3000:3000' # Expose Fastify app on port 3000
+      - '3010:3010' # Expose Fastify app on port 3010
     depends_on:
       - kafka # Ensure Kafka starts before Fastify
     networks:

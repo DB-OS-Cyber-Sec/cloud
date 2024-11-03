@@ -55,34 +55,3 @@ export const consumeWeather = (reply: FastifyReply) => {
       .send({ success: false, message: 'Failed to consume weather data' });
   }
 };
-
-// Consume AI predictions from Kafka
-export const connectAndSubscribeAI = async () => {
-  await aiConsumer.connect();
-  console.log('AI consumer connected.');
-
-  // Subscribe to the relevant topic for AI predictions
-  await aiConsumer.subscribe({ topic: 'current-weather', fromBeginning: true });
-  console.log('AI consumer subscribed to current-weather topic.');
-
-  clients.add({
-    raw: { write: (message: string) => console.log(message) },
-  } as FastifyReply);
-
-  // Run the consumer
-  await aiConsumer.run({
-    eachMessage: async ({ message }) => {
-      const messageValue = message.value?.toString();
-      if (messageValue) {
-        console.log(`AI Consumer consumed message: ${messageValue}`);
-
-        // Send weather data to the AI service via gRPC
-        const response = await sendWeatherDataGRPC(messageValue);
-        // Produce the AI predictions to the 'ai-predictions' topic
-        if (response) {
-          await produceAIPredictions(response);
-        }
-      }
-    },
-  });
-};

@@ -1,11 +1,17 @@
 import { weatherProducer, aiProducer } from './kafka';
-import { getCurrentConditions } from './environment';
+import { getCurrentConditions, getCurrentConditionsAI } from './environment';
+import { get } from 'http';
 
 export const getWeather = async () => {
   try {
     const current_weather = await getCurrentConditions();
+    const current_weather_ai = await getCurrentConditionsAI();
     // Send the weather data to the Kafka 'current-weather' topic
     if (!current_weather || Object.keys(current_weather).length === 0) {
+      console.error('No weather data available');
+      return;
+    }
+    if (!current_weather_ai || Object.keys(current_weather_ai).length === 0) {
       console.error('No weather data available');
       return;
     }
@@ -16,6 +22,11 @@ export const getWeather = async () => {
     });
 
     console.log('Current weather sent to Kafka');
+
+    // Send the weather data to the AI service
+    const aiPredictions = await sendWeatherDataGRPC(
+      JSON.stringify(current_weather_ai)
+    );
   } catch (err) {
     console.error('Failed to send message:', err);
   }

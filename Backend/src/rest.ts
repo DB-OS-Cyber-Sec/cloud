@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import * as db from './mongodb';
 import { getWeather } from './producer';
+import { getCurrentConditionsAI } from './environment';
 export const restAPIHandler = (fastify: FastifyInstance) => {
   // Check Fastify running
   fastify.get('/health', async (request, reply) => {
@@ -24,6 +25,18 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
     } catch (err) {
       reply.code(500).send({
         error: 'Failed to fetch weather data',
+        details: (err as Error).message,
+      });
+    }
+  });
+
+  fastify.get('/getCurrentAI', async (request, reply) => {
+    try {
+      const currentAI = await getCurrentConditionsAI();
+      reply.send(currentAI);
+    } catch (err) {
+      reply.code(500).send({
+        error: 'Failed to fetch AI data',
         details: (err as Error).message,
       });
     }
