@@ -12,11 +12,6 @@ logs
 # Ignore Kafka data directory
 kafka-data/
 
-# Docker
-docker-compose.override.yml
-docker-compose.*
-.dockerignore
-Dockerfile
 
 # IDE/Editor settings
 .vscode/
