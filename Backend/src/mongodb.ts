@@ -79,7 +79,7 @@ const TropicalCycloneBulletinSchema = new mongoose.Schema({
 
 // Mongoose Subscriber Schema
 const SubscriberSchema = new mongoose.Schema({
-  phoneNumber: {
+  email: {
     type: String,
     required: true, // Ensure this field is provided
   },

@@ -81,9 +81,9 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
 
   // POST /newSubscriber
   fastify.post('/newSubscriber', async (request, reply) => {
-    const { phoneNumber } = request.body as { phoneNumber: string }; // Expecting a single phone number
+    const { email } = request.body as { email: string }; // Expecting a single phone number
 
-    const subscriber = new db.Subscriber({ phoneNumber }); // Save phone number directly
+    const subscriber = new db.Subscriber({ email }); // Save phone number directly
 
     try {
       await subscriber.save();
@@ -98,10 +98,10 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
 
   // DELETE /delSubscriber
   fastify.delete('/delSubscriber', async (request, reply) => {
-    const { phoneNumber } = request.body as { phoneNumber: string }; // Expecting the phone number in the request body
+    const { email } = request.body as { email: string }; // Expecting the phone number in the request body
 
     try {
-      const result = await db.Subscriber.findOneAndDelete({ phoneNumber }); // Find and delete directly by phone number
+      const result = await db.Subscriber.findOneAndDelete({ email }); // Find and delete directly by phone number
       if (!result) {
         return reply.code(404).send({ error: 'Subscriber not found' });
       }
@@ -119,12 +119,10 @@ export const restAPIHandler = (fastify: FastifyInstance) => {
       const subscribers = await db.Subscriber.find().lean(); // Retrieve all subscribers
 
       // Extract phone numbers into a flat array
-      const phoneNumbers = subscribers.map(
-        (subscriber) => subscriber.phoneNumber
-      );
+      const email = subscribers.map((subscriber) => subscriber.email);
 
       // Wrap the array in an object
-      reply.send({ phoneNumbers }); // Send an object with phoneNumbers key
+      reply.send({ email }); // Send an object with email key
     } catch (err) {
       reply.code(500).send({
         error: 'Failed to fetch subscribers',

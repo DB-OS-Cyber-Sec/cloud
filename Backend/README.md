@@ -100,7 +100,7 @@ curl -X GET http://localhost:3010/getHistoricalData
 curl -X POST http://localhost:3010/newSubscriber \
 -H "Content-Type: application/json" \
 -d '{
-  "phoneNumber": "+6581234567"
+  "email": "test@test.com"
 }'
 ```
 
@@ -108,7 +108,11 @@ curl -X POST http://localhost:3010/newSubscriber \
 
 ```bash
 
-curl -X GET http://localhost:3010/getSubscribers
+curl -X DELETE http://localhost:3010/delSubscriber \
+-H "Content-Type: application/json" \
+-d '{
+    "email": "test@test.com"
+}'
 ```
 
 ### Get Subscribers
