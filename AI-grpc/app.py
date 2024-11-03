@@ -3,8 +3,13 @@ import grpc
 import data_pb2
 import data_pb2_grpc
 from openai import OpenAI
-from concurrent import futures
+from flask import Flask, jsonify, request
+from concurrent.futures import ThreadPoolExecutor
 import asyncio
+from functools import wraps
+import threading
+
+app = Flask(__name__)
 
 class DataService(data_pb2_grpc.DataServiceServicer):
     def __init__(self):
@@ -14,17 +19,14 @@ class DataService(data_pb2_grpc.DataServiceServicer):
         )
 
     def format_weather_prompt(self, weather_data):
-        # Process the minutely timeline data
         if isinstance(weather_data, str):
             try:
                 weather_data = json.loads(weather_data)
             except json.JSONDecodeError:
                 return "Error: Invalid JSON data received"
 
-        # Extract relevant weather information from tomorrow.io API format
         try:
             latest_data = weather_data[0] if isinstance(weather_data, list) else weather_data
-            print(latest_data)
             formatted_data = {
                 "location": {
                     "latitude": 14.5995,
@@ -57,32 +59,52 @@ class DataService(data_pb2_grpc.DataServiceServicer):
             }
         except (AttributeError, IndexError, KeyError) as e:
             print(f"Error processing weather data: {e}")
-            # print(f"Received weather data: {weather_data}")
-            formatted_data = weather_data  # Use original data if processing fails
-            
+            formatted_data = weather_data
 
         return (
             "You are a weather prediction API that MUST return ONLY valid JSON. "
-            "Analyze the following weather data and provide a typhoon prediction: "
+            "Analyze the following weather data and provide a typhoon prediction along with a 1-hour forecast: "
             f"{json.dumps(formatted_data, indent=2)}\n\n"
             "Return your response in this EXACT JSON format with no additional text or explanation:\n"
             "{\n"
-            '  "risk_classification": "Low|Medium|High",\n'
-            '  "typhoon_category": "Category X (where X is 1-5 based on Saffir-Simpson Scale)",\n'
-            '  "shelter_message": "Your message about staying or seeking shelter"\n'
-            "}\n\n"
-            "Rules:\n"
-            "1. risk_classification MUST be exactly 'Low', 'Medium', or 'High'\n"
-            "2. typhoon_category MUST follow format 'Category X' where X is 1-5\n"
-            "3. shelter_message should be a clear, concise instruction\n"
-            "4. Response MUST be ONLY the JSON object, no other text, no code blocks"
-        )
+                '  "risk_classification": "Low|Medium|High",\n'
+                '  "typhoon_category": "Category X (where X is 1-5 based on Saffir-Simpson Scale)",\n'
+                '  "shelter_message": "Your message about staying or seeking shelter",\n'
+                '  "one_hour_forecast": {\n'
+                '      "time": "forecast time",\n'
+                '      "cloud_base": "height in meters",\n'
+                '      "cloud_ceiling": "height in meters",\n'
+                '      "cloud_cover": "percentage",\n'
+                '      "dew_point": "temperature in degrees Celsius",\n'
+                '      "freezing_rain_intensity": "intensity level",\n'
+                '      "humidity": "percentage",\n'
+                '      "precipitation_probability": "percentage",\n'
+                '      "pressure_surface_level": "pressure in hPa",\n'
+                '      "rain_intensity": "intensity level",\n'
+                '      "sleet_intensity": "intensity level",\n'
+                '      "snow_intensity": "intensity level",\n'
+                '      "temperature": "temperature in degrees Celsius",\n'
+                '      "temperature_apparent": "apparent temperature in degrees Celsius",\n'
+                '      "uv_health_concern": "level (e.g., Low, Medium, High)",\n'
+                '      "uv_index": "index value",\n'
+                '      "visibility": "distance in kilometers",\n'
+                '      "weather_code": "code identifier",\n'
+                '      "wind_direction": "direction in degrees",\n'
+                '      "wind_gust": "speed in km/h",\n'
+                '      "wind_speed": "speed in km/h"\n'
+            '  }\n'
+                "}\n\n"
+                "Rules:\n"
+                "1. risk_classification MUST be exactly 'Low', 'Medium', or 'High'\n"
+                "2. typhoon_category MUST follow format 'Category X' where X is 1-5\n"
+                "3. shelter_message should be a clear, concise instruction\n"
+                "4. one_hour_forecast must include accurate values for all listed parameters\n"
+                "5. Response MUST be ONLY the JSON object, no other text, no code blocks"
+
+                    )
 
     async def GetAIPredictionsData(self, request, context):
         try:
-            # Print received data for debugging
-            # print(f"Received request data: {request.current_weather_json}...")
-            
             completion = self.client.chat.completions.create(
                 model="meta/llama-3.1-405b-instruct",
                 messages=[{
@@ -105,7 +127,6 @@ class DataService(data_pb2_grpc.DataServiceServicer):
                 )
             except json.JSONDecodeError as e:
                 print(f"Error parsing AI response: {e}")
-                print(f"Raw AI response: {response_content}")
                 return data_pb2.GetAIPredictionsResponse(
                     ai_predictions_json=json.dumps({
                         "error": "Failed to parse AI response",
@@ -121,13 +142,74 @@ class DataService(data_pb2_grpc.DataServiceServicer):
                 ai_predictions_json=json.dumps({"error": str(e)}, indent=2)
             )
 
-async def serve():
+# Shared DataService instance
+data_service = DataService()
+
+def async_to_sync(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+    return wrapper
+
+# Flask routes
+@app.route('/api/weather/prediction', methods=['POST'])
+async def get_weather_prediction():
+    try:
+        weather_data = request.json
+        if not weather_data:
+            return jsonify({"error": "No weather data provided"}), 400
+
+        # Create gRPC request
+        grpc_request = data_pb2.GetAIPredictionsRequest(
+            current_weather_json=json.dumps(weather_data)
+        )
+        
+        # Use the shared DataService instance
+        response = await data_service.GetAIPredictionsData(grpc_request, None)
+        return jsonify(json.loads(response.ai_predictions_json))
+
+    except Exception as e:
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "services": {
+            "flask": "running",
+            "grpc": "running",
+            "openai": "connected"
+        }
+    })
+
+async def run_grpc_server():
     server = grpc.aio.server()
-    data_pb2_grpc.add_DataServiceServicer_to_server(DataService(), server)
+    data_pb2_grpc.add_DataServiceServicer_to_server(data_service, server)
     server.add_insecure_port('[::]:50051')
     await server.start()
     print("gRPC server running on port 50051...")
     await server.wait_for_termination()
 
+def run_flask_server():
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+
+async def main():
+    # Create event loop for the main thread
+    loop = asyncio.get_event_loop()
+    
+    # Start gRPC server in the background
+    grpc_task = loop.create_task(run_grpc_server())
+    
+    # Start Flask in a separate thread
+    flask_thread = threading.Thread(target=run_flask_server)
+    flask_thread.daemon = True
+    flask_thread.start()
+    
+    try:
+        # Keep the main loop running
+        await grpc_task
+    except KeyboardInterrupt:
+        print("Shutting down servers...")
+
 if __name__ == '__main__':
-    asyncio.run(serve())
+    asyncio.run(main())
