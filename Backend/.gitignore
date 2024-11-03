@@ -12,7 +12,6 @@ logs
 # Ignore Kafka data directory
 kafka-data/
 
-
 # IDE/Editor settings
 .vscode/
 .idea/
