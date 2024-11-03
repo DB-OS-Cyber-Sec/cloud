@@ -62,9 +62,9 @@ export default function History() {
       <section className="bg-white p-6 rounded-lg shadow-md w-full">
         <h2 className="text-2xl font-semibold mb-4">Philippines Typhoon History</h2>
         <div className="space-y-4">
-        {Object.keys(groupedData).length > 0 ? (
+          {Object.keys(groupedData).length > 0 ? (
             Object.entries(groupedData).map(([name, items]) => {
-              const dateRange = `${new Date(items[0].issued).toLocaleDateString()} - ${new Date(items[items.length - 1].issued).toLocaleDateString()}`;
+              const dateRange = `${new Date(items[items.length - 1].issued).toLocaleDateString()} - ${new Date(items[0].issued).toLocaleDateString()}`;
               return (
                 <div key={name} className="p-4 bg-gray-100 rounded-md">
                   <div
@@ -84,7 +84,7 @@ export default function History() {
                       {items.map((item) => (
                         <div key={item._id} className="bg-white p-4 rounded shadow">
                           <p className="font-semibold">Issued Date: {new Date(item.issued).toLocaleDateString()}</p>
-                          <p>Movement: {item.movement}</p>
+                          <p>Wind Movement: {item.movement}</p>
                           <table className="w-full mt-2 border-collapse">
                             <thead>
                               <tr>
