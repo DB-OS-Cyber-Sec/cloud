@@ -1,8 +1,6 @@
 import { webAppConsumer, aiConsumer, notificationConsumer } from './kafka';
 import { FastifyReply } from 'fastify';
 
-// Store connected clients for SSE
-const clients = new Set<FastifyReply>();
 export const consumeWeather = (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
