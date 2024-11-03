@@ -22,7 +22,7 @@ const WeatherMap: React.FC = React.memo(() => {
       key={mapKey} // Unique key to force re-render on refresh or update
       center={[13, 122]} // Centered on the Philippines
       zoom={5}
-      style={{ height: "500px", width: "100%", borderRadius: "0.75rem" }}
+      style={{ height: "675px", width: "100%", borderRadius: "0.75rem" }}
       id="map" // Ensure this ID is unique if used elsewhere in the component
       scrollWheelZoom={true}   // Enable scroll wheel zoom
       dragging={true}          // Ensure dragging is enabled
