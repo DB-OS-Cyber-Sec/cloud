@@ -24,10 +24,10 @@ export default function History() {
         const data = await response.json();
         setHistoricalData(data);
       } else {
-        console.error('Failed to fetch historical data');
+        console.log('Failed to fetch historical data');
       }
     } catch (error) {
-      console.error('Error fetching historical data:', error);
+      console.log('Error fetching historical data:', error);
     }
   };
 
