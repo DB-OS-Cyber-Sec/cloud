@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
+      - "5000:5000"
       - "50051:50051"
     volumes:
       - .:/app
