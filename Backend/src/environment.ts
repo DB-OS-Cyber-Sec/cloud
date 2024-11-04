@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Set up API key and endpoint
 // const apiKey = 'ZGEA8P4Sp7IS7hdJYvTZlKj6T1uJqdZ4';
-const apiKey = 'zR3Bo5Zez7Qt5oHSmJYwyG7zWhkRiMTK';
-// const apiKey = '0rOlfvX4VJEEP4pPUIT6Kpkei2jliZDL';
+// const apiKey = 'zR3Bo5Zez7Qt5oHSmJYwyG7zWhkRiMTK';
+const apiKey = '0rOlfvX4VJEEP4pPUIT6Kpkei2jliZDL';
 const apiUrl = 'https://api.tomorrow.io/v4/timelines';
 
 // Manila, Philipines coordinates

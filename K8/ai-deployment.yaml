@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai
+  template:
+    metadata:
+      labels:
+        app: ai
+    spec:
+      containers:
+        - name: ai
+          image: pot4t0/cloud15:ai
+          ports:
+            - containerPort: 50051 # The port where the AI service listens
+          resources:
+            requests:
+              cpu: 500m
+            limits:
+              cpu: 1000m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai
+  labels:
+    app: ai
+spec:
+  type: ClusterIP # Change to NodePort or LoadBalancer for external access
+  ports:
+    - port: 50051 # Expose port 50051 for gRPC communication
+      targetPort: 50051 # Target port for the AI service inside the pod
+  selector:
+    app: ai # This matches the deployment labels
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # Target CPU utilization percentage

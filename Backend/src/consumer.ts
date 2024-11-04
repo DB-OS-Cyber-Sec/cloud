@@ -116,39 +116,6 @@ export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
           }
         },
       });
-      await emailConsumer.run({
-        eachMessage: async ({ message }) => {
-          const messageValue = message.value?.toString();
-          if (messageValue) {
-            console.log(`Consumed message: ${messageValue}`);
-
-            // Send email to subscribers
-            try {
-              const subscribers = await db.Subscriber.find().lean();
-              console.log(
-                `Found ${subscribers.length} subscribers. Sending emails...`
-              );
-
-              for (let subscriber of subscribers) {
-                try {
-                  await sendEmail(messageValue, subscriber.email);
-                  console.log(`Email sent to: ${subscriber.email}`);
-                } catch (error) {
-                  console.error(
-                    `Failed to send email to ${subscriber.email}:`,
-                    error
-                  );
-                }
-              }
-            } catch (dbError) {
-              console.error(
-                'Failed to fetch subscribers or send emails:',
-                dbError
-              );
-            }
-          }
-        },
-      });
 
       isTyphoonConsumerRunning = true;
     }
@@ -225,4 +192,44 @@ export const consumeForecast = async (reply: FastifyReply) => {
       .code(500)
       .send({ success: false, message: 'Failed to consume weather forecast' });
   }
+};
+
+export const consumeTyphoonEmail = async () => {
+  await emailConsumer.subscribe({ topic: 'typhoon-updates' });
+
+  await emailConsumer.run({
+    eachMessage: async ({ message }) => {
+      const messageValue = message.value?.toString();
+      if (messageValue) {
+        console.log(`Consumed message: ${messageValue}`);
+
+        // Send email to subscribers
+        try {
+          const subscribers = await db.Subscriber.find().lean();
+          console.log(
+            `Found ${subscribers.length} subscribers. Sending emails...`
+          );
+
+          for (let subscriber of subscribers) {
+            try {
+              const json = JSON.parse(messageValue);
+              if (!json) return;
+              const { typhoon_category, risk_classification, shelter_message } =
+                json;
+              const emailContent = `Typhoon Category: ${typhoon_category}\nRisk Classification: ${risk_classification}\nShelter Message: ${shelter_message}`;
+              await sendEmail(emailContent, subscriber.email);
+              console.log(`Email sent to: ${subscriber.email}`);
+            } catch (error) {
+              console.error(
+                `Failed to send email to ${subscriber.email}:`,
+                error
+              );
+            }
+          }
+        } catch (dbError) {
+          console.error('Failed to fetch subscribers or send emails:', dbError);
+        }
+      }
+    },
+  });
 };

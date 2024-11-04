@@ -57,18 +57,28 @@ function WeatherComponent() {
     };
   }, []);
 
-  if (loading) return <p>Press the "Simulate API Call" button to get current weather data</p>; // Show loading message
+  if (loading)
+    return (
+      <p>
+        Press the &quot;Simulate API Call&quot; button to get current weather
+        data
+      </p>
+    ); // Show loading message
   if (error) return <p>{error}</p>;
 
   return (
     <div>
-      <p>Temperature: {weather.temperature}°C</p>
-      <p>Feels Like: {weather.temperatureApparent}°C</p>
-      <p>Humidity: {weather.humidity}%</p>
-      <p>Wind Speed: {weather.windSpeed} km/h</p>
-      <p>Wind Direction: {weather.windDirection}°</p>
-      <p>Wind Gust: {weather.windGust} km/h</p>
-      <p>Precipitation Probability: {weather.precipitationProbability}%</p>
+      {weather ? (
+        <>
+          <p>Temperature: {weather.temperature}°C</p>
+          <p>Feels Like: {weather.temperatureApparent}°C</p>
+          <p>Humidity: {weather.humidity}%</p>
+          <p>Wind Speed: {weather.windSpeed} km/h</p>
+          <p>Wind Direction: {weather.windDirection}°</p>
+          <p>Wind Gust: {weather.windGust} km/h</p>
+          <p>Precipitation Probability: {weather.precipitationProbability}%</p>
+        </>
+      ) : null}
     </div>
   );
 }

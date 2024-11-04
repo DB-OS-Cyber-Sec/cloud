@@ -17,6 +17,15 @@ export const notificationConsumer = kafka.consumer({ groupId: 'notification' });
 export const emailConsumer = kafka.consumer({ groupId: 'email' });
 
 export async function kafkaConnector(fastify: FastifyInstance) {
+  // Fetch metadata for all necessary topics
+  try {
+    const metadata = await kafka.admin().fetchTopicMetadata({
+      topics: ['current-weather', 'weather-forecast', 'typhoon-updates'],
+    });
+    fastify.log.info('Fetched topic metadata:', metadata);
+  } catch (err) {
+    fastify.log.error('Failed to fetch topic metadata:', err);
+  }
   // Connect to Kafka brokers
   await weatherProducer.connect();
   await aiProducer.connect();
@@ -39,7 +48,6 @@ export async function kafkaConnector(fastify: FastifyInstance) {
   await webAppConsumer.subscribe({ topic: 'current-weather' });
   await aiConsumer.subscribe({ topic: 'weather-forecast' });
   await notificationConsumer.subscribe({ topic: 'typhoon-updates' });
-  await emailConsumer.subscribe({ topic: 'typhoon-updates' });
 }
 
 export const kafkaProducerHandler = (fastify: FastifyInstance) => {
@@ -93,4 +101,8 @@ export const kafkaConsumerHandler = (fastify: FastifyInstance) => {
   fastify.get('/weather-forecast', async (request, reply) => {
     consumerModule.consumeForecast(reply);
   });
+
+  // fastify.get('/email-typhoon-updates', async (request, reply) => {
+  consumerModule.consumeTyphoonEmail();
+  // });
 };

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: pot4t0/cloud15:frontend
+          ports:
+            - containerPort: 3000 # Port where the frontend listens
+          resources:
+            requests:
+              cpu: 100m
+            limits:
+              cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  type: NodePort # If you want external access to the frontend
+  ports:
+    - port: 3000 # Frontend listens on port 3000
+      targetPort: 3000 # Map to the container port
+  selector:
+    app: frontend # This matches the deployment labels

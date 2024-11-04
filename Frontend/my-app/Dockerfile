@@ -7,23 +7,23 @@ WORKDIR /app
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 
+# Install dependencies
+RUN npm install 
 
-# Set NODE_ENV to development to include dev dependencies
-ENV NODE_ENV=development
-
-# Install all dependencies, including dev dependencies
-RUN npm install
-
-# Install nodemon, ts-node, and typescript globally for convenience
-RUN npm install -g nodemon ts-node typescript next
-
+# Install nodemon, ts-node, and typescript globally for development convenience
+RUN npm install -g nodemon ts-node typescript next tailwindcss postcss autoprefixer
 
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 3000
+# Build the Next.js app
+RUN npm run build
+
+# Expose the port Fastify/Next.js will be using
 EXPOSE 3000
 
-# Start the Fastify server in development mode using nodemon
-# CMD ["next", "dev"]
-CMD ["npm", "run", "dev"]
+# Use NODE_ENV for better control over environment
+ENV NODE_ENV=production
+
+# Start the Fastify or Next.js server
+CMD ["npm", "run", "start"]

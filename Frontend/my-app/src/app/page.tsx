@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import dynamic from "next/dynamic";
-import WeatherComponent from "../components/WeatherComponent";
-import WeatherForecast from "@/components/WeatherForecast";
-import TyphoonAlert from "@/components/TyphoonAlert";
+import * as React from 'react';
+import dynamic from 'next/dynamic';
+import WeatherComponent from '../components/WeatherComponent';
+import WeatherForecast from '../components/WeatherForecast';
+import TyphoonAlert from '../components/TyphoonAlert';
 
 // Dynamically import WeatherMap without wrapping in useMemo
-const WeatherMap = dynamic(() => import("../components/WeatherMap"), {
+const WeatherMap = dynamic(() => import('../components/WeatherMap'), {
   ssr: false, // Disable server-side rendering for this component
 });
 
 export default function Home() {
-  const [philippinesTime, setPhilippinesTime] = React.useState("");
+  const [philippinesTime, setPhilippinesTime] = React.useState('');
 
   React.useEffect(() => {
     const updatePhilippinesTime = () => {
       const date = new Date();
       const options: Intl.DateTimeFormatOptions = {
-        timeZone: "Asia/Manila",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
         hour12: true,
       };
-      setPhilippinesTime(date.toLocaleString("en-US", options));
+      setPhilippinesTime(date.toLocaleString('en-US', options));
     };
 
     // Update time on mount
@@ -42,10 +42,10 @@ export default function Home() {
   // Handler to simulate the API call
   const handleSimulateApiCall = async () => {
     try {
-      await fetch("http://localhost:3010/getWeather", { method: "GET" });
-      console.log("Simulate API Call triggered");
+      await fetch('http://localhost:3010/getWeather', { method: 'GET' });
+      console.log('Simulate API Call triggered');
     } catch (error) {
-      console.log("Failed to trigger API call:", error);
+      console.log('Failed to trigger API call:', error);
     }
   };
 
@@ -67,7 +67,9 @@ export default function Home() {
           <aside className="w-full md:w-1/3 space-y-5">
             {/* First Block - Weather Information */}
             <div className="bg-[#121C2D] text-white p-4 rounded-lg">
-              <h2 className="text-lg font-semibold">Republic of the Philippines, PH</h2>
+              <h2 className="text-lg font-semibold">
+                Republic of the Philippines, PH
+              </h2>
               <p className="text-sm text-gray-400">{philippinesTime}</p>
               <WeatherComponent />
             </div>

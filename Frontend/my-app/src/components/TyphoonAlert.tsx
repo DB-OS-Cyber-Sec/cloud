@@ -50,7 +50,9 @@ const TyphoonAlert: React.FC = () => {
   if (error) return <p>{error}</p>;
   if (!data)
     return (
-      <p>Press the "Simulate API Call" button to get typhoon alert data</p>
+      <p>
+        Press the &quot;Simulate API Call&quot; button to get typhoon alert data
+      </p>
     );
 
   return (

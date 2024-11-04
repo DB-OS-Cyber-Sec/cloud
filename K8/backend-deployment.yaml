@@ -31,9 +31,9 @@ spec:
             - containerPort: 9093
           env:
             - name: KAFKA_MESSAGE_MAX_BYTES
-              value: '209715200' # Example value: 200 MB
+              value: '1073741824' # Updated to allow 1 GB messages
             - name: KAFKA_PRODUCER_MAX_REQUEST_SIZE
-              value: '209715200' # Example value: 200 MB
+              value: '1073741824' # Updated to allow 1 GB messages
             - name: KAFKA_LISTENERS
               value: PLAINTEXT://:9092,CONTROLLER://:9093
             - name: KAFKA_ADVERTISED_LISTENERS
@@ -98,7 +98,6 @@ spec:
     - name: http
       port: 3010
       targetPort: 3010
-      nodePort: 30001 # Optional: Specify a custom NodePort
   selector:
     app: fastify-kafka
 
