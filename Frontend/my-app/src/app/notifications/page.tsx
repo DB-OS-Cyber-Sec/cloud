@@ -28,14 +28,14 @@ export default function Notifications() {
   const [subscribers, setSubscribers] = useState<string[]>([]);
   const [alertMessage, setAlertMessage] = useState("");
 
-  // Store the list of subscribers phone numbers when the component mounts
+  // Store the list of subscribers when the component mounts
   useEffect(() => {
     const fetchSubscribers = async () => {
       try {
         const response = await fetch("http://localhost:3010/getSubscribers");
         if (response.ok) {
           const data = await response.json();
-          setSubscribers(data.email); // Store the array of phone numbers
+          setSubscribers(data.email);
         } else {
           console.log("Failed to fetch subscribers");
         }
@@ -50,7 +50,7 @@ export default function Notifications() {
   // Validation function to check if email exists or not
   const validateEmail = (action: "subscribe" | "unsubscribe") => {
     const email = action === 'subscribe' ? `${subEmail}` : `${unsubEmail}`;
-    const isSubscribed = subscribers.includes(subEmail);
+    const isSubscribed = subscribers.includes(email);
 
     if (action === "subscribe" && isSubscribed) {
       setAlertMessage("This email is already subscribed.");
@@ -90,13 +90,13 @@ export default function Notifications() {
       if (response.ok) {
         const data = await response.json();
         setSubscribers([...subscribers, data.email]);
-        setAlertMessage("Email added successfully!");
+        setAlertMessage("Email subscribed successfully!");
       } else {
-        console.log("Failed to add email");
+        // console.log("Failed to add email");
         setAlertMessage("Failed to add email");
       }
     } catch (error) {
-      console.log("Error adding email:", error);
+      // console.log("Error adding email:", error);
       setAlertMessage("Error adding email");
     }
   };
@@ -112,14 +112,14 @@ export default function Notifications() {
       if (response.ok) {
         const data = await response.json();
         setSubscribers([...subscribers, data.email]);
-        setAlertMessage("Email added successfully!");
+        setAlertMessage("Email unsubscribed successfully!");
       } else {
-        console.log("Failed to add email");
-        setAlertMessage("Failed to add email");
+        // console.log("Failed to delete email");
+        setAlertMessage("Failed to delete email");
       }
     } catch (error) {
-      console.log("Error adding email:", error);
-      setAlertMessage("Error adding email");
+      // console.log("Error deleting email:", error);
+      setAlertMessage("Error deleting email");
     }
   };
 
@@ -277,7 +277,7 @@ export default function Notifications() {
                 <span className="font-bold text-blue-800"> {unsubEmail} </span>?
               </p>
               <p className="mb-4">
-                A message will be sent to confirm your unsubscription.
+                An email will be sent to confirm your unsubscription.
               </p>
               <div className="flex justify-end gap-4">
                 <button
