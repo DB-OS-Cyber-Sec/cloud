@@ -82,9 +82,11 @@ export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
         const messageValue = message.value?.toString();
         if (messageValue) {
           console.log(`Consumed message: ${messageValue}`);
+
           // Send the consumed message to all connected clients
           for (const client of clients) {
             try {
+              console.log('Sending message to client:', messageValue);
               client.raw.write(`data: ${messageValue}\n\n`);
             } catch (error) {
               console.error('Error sending message to client:', error);
