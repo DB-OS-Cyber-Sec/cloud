@@ -15,7 +15,10 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send an email
-const sendEmail = async (eventData: string, toEmail: string): Promise<void> => {
+export const sendEmail = async (
+  eventData: string,
+  toEmail: string
+): Promise<void> => {
   const mailOptions = {
     from: senderEmail, // Sender address
     to: toEmail, // List of recipients
@@ -32,51 +35,72 @@ const sendEmail = async (eventData: string, toEmail: string): Promise<void> => {
 };
 
 // Function to listen to SSE events
-export const startEmailListener = () => {
-  const sseUrl = 'http://0.0.0.0:3010/typhoon-stream';
+// export const startEmailListener = () => {
+//   const sseUrl = 'http://0.0.0.0:3010/typhoon-stream';
+//   let retryCount = 0; // Track reconnection attempts
+//   const maxRetries = 5; // Set a maximum number of retries
 
-  const connectToSSE = () => {
-    const eventSource = new EventSource(sseUrl);
+//   const connectToSSE = () => {
+//     const eventSource = new EventSource(sseUrl);
 
-    eventSource.onmessage = async (event) => {
-      console.log('Received event:', event.data);
-      const json = JSON.parse(event.data);
+//     eventSource.onmessage = async (event) => {
+//       console.log('Received event:', event.data);
+//       const json = JSON.parse(event.data);
 
-      if (!json) return;
+//       if (!json) return;
 
-      const typhoonCategory = json.typhoon_category;
-      const risk_classification = json.risk_classification;
-      const shelter_message = json.shelter_message;
+//       const { typhoon_category, risk_classification, shelter_message } = json;
 
-      const emailContent = `Typhoon Category: ${typhoonCategory}\nRisk Classification: ${risk_classification}\nShelter Message: ${shelter_message}`;
+//       const emailContent = `Typhoon Category: ${typhoon_category}\nRisk Classification: ${risk_classification}\nShelter Message: ${shelter_message}`;
 
-      const subscribers = await db.Subscriber.find().lean(); // Retrieve all subscribers
+//       try {
+//         // Cache subscribers in memory to avoid frequent DB hits (use with caution for large datasets)
+//         const subscribers = await db.Subscriber.find().lean();
+//         console.log(
+//           `Found ${subscribers.length} subscribers. Sending emails...`
+//         );
 
-      // Send emails to all subscribers
-      subscribers.forEach(async (subscriber) => {
-        try {
-          await sendEmail(emailContent, subscriber.email);
-          console.log('Email sent to:', subscriber.email);
-          console.log('Email content:', emailContent);
-        } catch (error) {
-          console.error(`Failed to send email to ${subscriber.email}:`, error);
-        }
-      });
-    };
+//         // Send emails to all subscribers in a throttled manner
+//         for (let subscriber of subscribers) {
+//           try {
+//             await sendEmail(emailContent, subscriber.email);
+//             console.log(`Email sent to: ${subscriber.email}`);
+//           } catch (error) {
+//             console.error(
+//               `Failed to send email to ${subscriber.email}:`,
+//               error
+//             );
+//           }
+//         }
+//       } catch (dbError) {
+//         console.error('Failed to fetch subscribers or send emails:', dbError);
+//       }
+//     };
 
-    // Handle SSE errors
-    eventSource.onerror = (error) => {
-      console.error('SSE error:', error);
-      // Retry connection after 5 seconds
-      setTimeout(() => {
-        console.log('Attempting to reconnect to SSE...');
-        connectToSSE(); // Reconnect
-      }, 5000);
-    };
-  };
+//     // Handle SSE errors and reconnect with backoff
+//     eventSource.onerror = (error) => {
+//       console.error('SSE error:', error);
+//       eventSource.close();
 
-  // Initiate the first SSE connection
-  connectToSSE();
+//       // Retry connection with backoff
+//       if (retryCount < maxRetries) {
+//         retryCount++;
+//         const retryDelay = 5000 * retryCount; // Exponential backoff
+//         console.log(
+//           `Attempting to reconnect to SSE in ${retryDelay / 1000} seconds...`
+//         );
 
-  console.log('Email listener started and is running...');
-};
+//         setTimeout(() => {
+//           console.log('Reconnecting to SSE...');
+//           connectToSSE();
+//         }, retryDelay);
+//       } else {
+//         console.error('Max retries reached. Giving up on reconnecting to SSE.');
+//       }
+//     };
+//   };
+
+//   // Initiate the first SSE connection
+//   connectToSSE();
+//   console.log('Email listener started and is running...');
+// };

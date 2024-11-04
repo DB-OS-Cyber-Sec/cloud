@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 type TyphoonAlertData = {
   riskClassification: string;
@@ -12,30 +12,32 @@ const TyphoonAlert: React.FC = () => {
 
   useEffect(() => {
     // Create an EventSource to listen to the typhoon alert stream
-    const eventSource = new EventSource("http://localhost:3010/typhoon-stream");
+    const eventSource = new EventSource('http://localhost:3010/typhoon-stream');
 
-    // Listen for the incoming messages from the server
+    // Listen for incoming messages from the server
     eventSource.onmessage = (event) => {
       try {
-        console.log("Raw typhoon alert data:", event.data); // Verify data structure
+        console.log('Received typhoon alert data:', event.data);
         const parsedData = JSON.parse(event.data);
 
-        // Match server keys
-        setData({
-          riskClassification: parsedData.risk_classification,
-          typhoonCategory: parsedData.typhoon_category,
-          shelterMessage: parsedData.shelter_message,
-        });
+        const cleanData: TyphoonAlertData = {
+          riskClassification: parsedData.risk_classification || 'Unknown',
+          typhoonCategory: parsedData.typhoon_category || 'Unknown',
+          shelterMessage:
+            parsedData.shelter_message || 'No shelter message available',
+        };
+
+        setData(cleanData);
       } catch (error) {
-        console.log("Error parsing typhoon alert data:", error);
-        setError("Error parsing typhoon alert data.");
+        console.log('Error parsing typhoon alert data:', error);
+        setError('Error parsing typhoon alert data.');
       }
     };
 
     // Handle any error from the EventSource
     eventSource.onerror = (error) => {
-      console.log("EventSource failed:", error);
-      setError("Failed to connect to typhoon alert stream.");
+      console.log('EventSource failed:', error);
+      setError('Failed to connect to typhoon alert stream.');
       eventSource.close(); // Close the EventSource on error
     };
 
@@ -46,13 +48,22 @@ const TyphoonAlert: React.FC = () => {
   }, []);
 
   if (error) return <p>{error}</p>;
-  if (!data) return <p>Press the "Simulate API Call" button to get typhoon alert data</p>;
+  if (!data)
+    return (
+      <p>Press the "Simulate API Call" button to get typhoon alert data</p>
+    );
 
   return (
     <div>
-      <p><strong>Risk of Typhoon:</strong> {data.riskClassification}</p>
-      <p><strong>Typhoon Category:</strong> {data.typhoonCategory}</p>
-      <p><strong>Action to Take:</strong> {data.shelterMessage}</p>
+      <p>
+        <strong>Risk Classification:</strong> {data.riskClassification}
+      </p>
+      <p>
+        <strong>Typhoon Category:</strong> {data.typhoonCategory}
+      </p>
+      <p>
+        <strong>Shelter Message:</strong> {data.shelterMessage}
+      </p>
     </div>
   );
 };

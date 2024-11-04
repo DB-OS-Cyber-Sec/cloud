@@ -1,6 +1,18 @@
-import { webAppConsumer, aiConsumer, notificationConsumer } from './kafka';
+import {
+  webAppConsumer,
+  aiConsumer,
+  notificationConsumer,
+  emailConsumer,
+} from './kafka';
 import { FastifyReply } from 'fastify';
+import { sendEmail } from './email';
+import * as db from './mongodb';
 
+let isWeatherConsumerRunning = false;
+let isTyphoonConsumerRunning = false;
+let isForecastConsumerRunning = false;
+
+// Consume Weather Updates
 export const consumeWeather = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
@@ -22,23 +34,27 @@ export const consumeWeather = async (reply: FastifyReply) => {
       reply.raw.write(': keep-alive\n\n'); // Sending a keep-alive message
     }, 20000);
 
-    // Ensure the Kafka consumer is running and processing messages
-    await webAppConsumer.run({
-      eachMessage: async ({ message }) => {
-        const messageValue = message.value?.toString();
-        if (messageValue) {
-          console.log(`Consumed message: ${messageValue}`);
-          // Send the consumed message to all connected clients
-          for (const client of clients) {
-            try {
-              client.raw.write(`data: ${messageValue}\n\n`);
-            } catch (error) {
-              console.error('Error sending message to client:', error);
+    if (!isWeatherConsumerRunning) {
+      // Ensure the Kafka consumer is only started once
+      await webAppConsumer.run({
+        eachMessage: async ({ message }) => {
+          const messageValue = message.value?.toString();
+          if (messageValue) {
+            console.log(`Consumed message: ${messageValue}`);
+            // Send the consumed message to all connected clients
+            for (const client of clients) {
+              try {
+                client.raw.write(`data: ${messageValue}\n\n`);
+              } catch (error) {
+                console.error('Error sending message to client:', error);
+              }
             }
           }
-        }
-      },
-    });
+        },
+      });
+
+      isWeatherConsumerRunning = true;
+    }
 
     // Handle client disconnection
     reply.raw.on('close', () => {
@@ -55,6 +71,7 @@ export const consumeWeather = async (reply: FastifyReply) => {
   }
 };
 
+// Consume Typhoon Updates
 export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
@@ -76,25 +93,65 @@ export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
       reply.raw.write(': keep-alive\n\n'); // Sending a keep-alive message
     }, 20000);
 
-    // Ensure the Kafka consumer is running and processing messages
-    await notificationConsumer.run({
-      eachMessage: async ({ message }) => {
-        const messageValue = message.value?.toString();
-        if (messageValue) {
-          console.log(`Consumed message: ${messageValue}`);
+    if (!isTyphoonConsumerRunning) {
+      // Ensure the Kafka consumer is only started once
+      await notificationConsumer.run({
+        eachMessage: async ({ message }) => {
+          const messageValue = message.value?.toString();
+          if (messageValue) {
+            console.log(`Consumed message: ${messageValue}`);
 
-          // Send the consumed message to all connected clients
-          for (const client of clients) {
-            try {
-              console.log('Sending message to client:', messageValue);
-              client.raw.write(`data: ${messageValue}\n\n`);
-            } catch (error) {
-              console.error('Error sending message to client:', error);
+            // Send the consumed message to all connected clients
+            for (const client of clients) {
+              try {
+                console.log(
+                  'Sending message to client (typhoon-updates):',
+                  messageValue
+                );
+                client.raw.write(`data: ${messageValue}\n\n`);
+              } catch (error) {
+                console.error('Error sending message to client:', error);
+              }
             }
           }
-        }
-      },
-    });
+        },
+      });
+      await emailConsumer.run({
+        eachMessage: async ({ message }) => {
+          const messageValue = message.value?.toString();
+          if (messageValue) {
+            console.log(`Consumed message: ${messageValue}`);
+
+            // Send email to subscribers
+            try {
+              const subscribers = await db.Subscriber.find().lean();
+              console.log(
+                `Found ${subscribers.length} subscribers. Sending emails...`
+              );
+
+              for (let subscriber of subscribers) {
+                try {
+                  await sendEmail(messageValue, subscriber.email);
+                  console.log(`Email sent to: ${subscriber.email}`);
+                } catch (error) {
+                  console.error(
+                    `Failed to send email to ${subscriber.email}:`,
+                    error
+                  );
+                }
+              }
+            } catch (dbError) {
+              console.error(
+                'Failed to fetch subscribers or send emails:',
+                dbError
+              );
+            }
+          }
+        },
+      });
+
+      isTyphoonConsumerRunning = true;
+    }
 
     // Handle client disconnection
     reply.raw.on('close', () => {
@@ -110,6 +167,8 @@ export const consumeTyphoonUpdates = async (reply: FastifyReply) => {
       .send({ success: false, message: 'Failed to consume typhoon updates' });
   }
 };
+
+// Consume Weather Forecast
 export const consumeForecast = async (reply: FastifyReply) => {
   const clients = new Set<FastifyReply>();
 
@@ -131,23 +190,27 @@ export const consumeForecast = async (reply: FastifyReply) => {
       reply.raw.write(': keep-alive\n\n'); // Sending a keep-alive message
     }, 20000);
 
-    // Ensure the Kafka consumer is running and processing messages
-    await aiConsumer.run({
-      eachMessage: async ({ message }) => {
-        const messageValue = message.value?.toString();
-        if (messageValue) {
-          console.log(`Consumed message: ${messageValue}`);
-          // Send the consumed message to all connected clients
-          for (const client of clients) {
-            try {
-              client.raw.write(`data: ${messageValue}\n\n`);
-            } catch (error) {
-              console.error('Error sending message to client:', error);
+    if (!isForecastConsumerRunning) {
+      // Ensure the Kafka consumer is only started once
+      await aiConsumer.run({
+        eachMessage: async ({ message }) => {
+          const messageValue = message.value?.toString();
+          if (messageValue) {
+            console.log(`Consumed message: ${messageValue}`);
+            // Send the consumed message to all connected clients
+            for (const client of clients) {
+              try {
+                client.raw.write(`data: ${messageValue}\n\n`);
+              } catch (error) {
+                console.error('Error sending message to client:', error);
+              }
             }
           }
-        }
-      },
-    });
+        },
+      });
+
+      isForecastConsumerRunning = true;
+    }
 
     // Handle client disconnection
     reply.raw.on('close', () => {
