@@ -15,8 +15,10 @@ const server: FastifyInstance = Fastify({ logger: true });
 
 // Register CORS
 server.register(cors, {
-  origin: '*', // Allow all origins, adjust this as necessary for security
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allow all methods
+  allowedHeaders: ['*'], // Allow all headers
+  credentials: true, // Allow credentials (like cookies)
 });
 
 // Register MongoDB and Kafka connectors
@@ -69,6 +71,7 @@ kafkaConsumerHandler(server);
 const start = async () => {
   try {
     await kafkaConnector(server);
+
     await server.listen({ port: 3010, host: '0.0.0.0' });
     server.log.info(`Server running on port 3010 at 0.0.0.0`);
   } catch (err) {

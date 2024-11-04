@@ -14,6 +14,7 @@ export const aiProducer = kafka.producer();
 export const webAppConsumer = kafka.consumer({ groupId: 'web-app' });
 export const aiConsumer = kafka.consumer({ groupId: 'ai' });
 export const notificationConsumer = kafka.consumer({ groupId: 'notification' });
+export const emailConsumer = kafka.consumer({ groupId: 'email' });
 
 export async function kafkaConnector(fastify: FastifyInstance) {
   // Connect to Kafka brokers
@@ -22,6 +23,7 @@ export async function kafkaConnector(fastify: FastifyInstance) {
   await webAppConsumer.connect();
   await aiConsumer.connect();
   await notificationConsumer.connect();
+  await emailConsumer.connect();
 
   // Decorate Fastify instance with Kafka producer and consumer
   fastify.decorate('kafka', {
@@ -30,12 +32,14 @@ export async function kafkaConnector(fastify: FastifyInstance) {
     webAppConsumer,
     aiConsumer,
     notificationConsumer,
+    emailConsumer,
   });
 
   // Subscribe to topics
   await webAppConsumer.subscribe({ topic: 'current-weather' });
   await aiConsumer.subscribe({ topic: 'weather-forecast' });
   await notificationConsumer.subscribe({ topic: 'typhoon-updates' });
+  await emailConsumer.subscribe({ topic: 'typhoon-updates' });
 }
 
 export const kafkaProducerHandler = (fastify: FastifyInstance) => {
