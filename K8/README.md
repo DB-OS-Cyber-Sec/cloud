@@ -51,9 +51,9 @@ kubectl apply -f .
 kubectl delete pods --all
 ```
 
-## forward Port for Kubernetes
+## Forward Port for Kubernetes
 
 ```bash
-kubectl port-forward svc/fastify 3010:3010
+kubectl port-forward svc/fastify 3010:3010 &
 kubectl port-forward svc/frontend 3000:3000
 ```

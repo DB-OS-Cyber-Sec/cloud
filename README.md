@@ -80,3 +80,7 @@ To deploy using Kubernetes:
    kubectl port-forward svc/frontend 3000:3000
    • Refer to the README in the ./K8 directory for detailed instructions.
    ```
+
+## Tesing
+
+Refer to Testing folder
